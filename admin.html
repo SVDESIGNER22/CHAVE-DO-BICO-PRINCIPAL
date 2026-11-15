@@ -3,19 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel Administrativo | CHAVE DO BICO</title>
+  <title>Painel de Gestão Imobiliária | CHAVE DO BICO</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/jpeg" href="logo.jpg">
 
-  <!-- Google Fonts: Manrope & Inter -->
+  <!-- Google Fonts: Manrope (Headings) & Inter (Body, Inputs, Buttons) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 
   <!-- Leaflet CSS para o mapa de marcação de coordenadas -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 
   <style>
+    /* ==========================================================================
+       DESIGN SYSTEM TOKENS & RESET — CHAVE DO BICO
+       ========================================================================== */
     :root {
       --brand-dark: #004719;
       --brand-primary: #087B18;
@@ -23,6 +26,7 @@
       --brand-accent-light: #C9FF24;
       --white: #FFFFFF;
       --surface-muted: #F7FAF7;
+      --surface-card: #FFFFFF;
       --text-primary: #17231A;
       --text-secondary: #66736A;
       --border: #E5EBE6;
@@ -34,30 +38,34 @@
       --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
       --radius-card: 16px;
-      --radius-btn: 10px;
-      --radius-input: 8px;
+      --radius-btn: 12px;
+      --radius-input: 10px;
       --radius-pill: 9999px;
+
       --shadow-sm: 0 4px 16px rgba(0, 71, 25, 0.06);
       --shadow-hover: 0 12px 28px rgba(0, 71, 25, 0.12);
+      --shadow-elevated: 0 20px 38px rgba(0, 47, 16, 0.16);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: var(--font-body);
-      background-color: #F0F4F1;
+      background-color: #F0F5F1;
       color: var(--text-primary);
       line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Topbar */
+    /* Topbar Premium */
     .admin-header {
-      background-color: var(--brand-dark);
+      background: linear-gradient(135deg, #003612 0%, #004719 50%, #002b0f 100%);
       color: var(--white);
-      padding: 16px 24px;
+      padding: 16px 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-bottom: 2px solid var(--brand-accent);
+      box-shadow: 0 8px 24px rgba(0, 47, 16, 0.25);
       position: sticky;
       top: 0;
       z-index: 1000;
@@ -65,161 +73,454 @@
     .brand-group {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
+    }
+    .brand-logo-wrap {
+      position: relative;
     }
     .brand-group img {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      border: 1.5px solid var(--brand-accent);
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 2px solid var(--brand-accent);
+      box-shadow: 0 0 12px rgba(66, 217, 0, 0.4);
+      display: block;
+      object-fit: cover;
     }
-    .brand-group h1 {
+    .brand-info h1 {
       font-family: var(--font-heading);
-      font-size: 18px;
+      font-size: 19px;
       font-weight: 800;
+      letter-spacing: -0.01em;
       line-height: 1.1;
+      color: var(--white);
     }
-    .brand-group span {
-      font-size: 12px;
+    .brand-info span {
+      font-size: 12.5px;
       color: var(--brand-accent-light);
+      font-weight: 500;
     }
-    .header-links {
+    .header-actions {
       display: flex;
       gap: 12px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
-    /* Layout */
+    /* Badge da Nuvem com Pulso */
+    .cloud-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(66, 217, 0, 0.15);
+      border: 1px solid var(--brand-accent);
+      color: var(--brand-accent-light);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      letter-spacing: 0.03em;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--brand-accent);
+      box-shadow: 0 0 8px var(--brand-accent);
+      animation: pulseAnim 1.8s infinite;
+    }
+    @keyframes pulseAnim {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.4); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+
+    /* Container */
     .admin-container {
-      max-width: 1200px;
+      max-width: 1240px;
       margin: 28px auto;
       padding: 0 20px;
     }
 
-    /* Tabs */
+    /* Navegação por Abas */
     .admin-tabs {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       margin-bottom: 24px;
       border-bottom: 2px solid #D6E3D8;
       overflow-x: auto;
       padding-bottom: 2px;
     }
     .tab-btn {
-      background: none;
+      background: transparent;
       border: none;
       font-family: var(--font-heading);
       font-size: 15px;
       font-weight: 700;
       color: var(--text-secondary);
-      padding: 12px 20px;
+      padding: 12px 22px;
       cursor: pointer;
-      border-radius: 8px 8px 0 0;
+      border-radius: 12px 12px 0 0;
       transition: all 0.2s ease;
       white-space: nowrap;
-    }
-    .tab-btn:hover { color: var(--brand-primary); background-color: rgba(8, 123, 24, 0.05); }
-    .tab-btn.active {
-      color: var(--brand-dark);
-      background-color: var(--white);
-      border-bottom: 3px solid var(--brand-primary);
-    }
-
-    /* Panels */
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    .card {
-      background-color: var(--white);
-      border-radius: var(--radius-card);
-      border: 1px solid var(--border);
-      padding: 24px;
-      box-shadow: var(--shadow-sm);
-      margin-bottom: 24px;
-    }
-    .card h2 {
-      font-family: var(--font-heading);
-      font-size: 20px;
-      color: var(--brand-dark);
-      margin-bottom: 8px;
-    }
-    .card p.sub {
-      font-size: 14px;
-      color: var(--text-secondary);
-      margin-bottom: 20px;
-    }
-
-    /* Buttons */
-    .btn {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 18px;
+    }
+    .tab-btn:hover {
+      color: var(--brand-primary);
+      background-color: rgba(8, 123, 24, 0.06);
+    }
+    .tab-btn.active {
+      color: var(--brand-dark);
+      background-color: var(--white);
+      box-shadow: 0 -3px 10px rgba(0, 47, 16, 0.04);
+      border-bottom: 3.5px solid var(--brand-primary);
+    }
+
+    /* Painéis */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards e Containers */
+    .admin-card {
+      background-color: var(--white);
+      border-radius: var(--radius-card);
+      border: 1.5px solid var(--border);
+      padding: 28px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+    .admin-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .admin-card h2 {
+      font-family: var(--font-heading);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--brand-dark);
+      letter-spacing: -0.015em;
+    }
+    .admin-card p.sub {
       font-size: 14px;
-      font-weight: 600;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Botões */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--font-body);
       border-radius: var(--radius-btn);
-      border: 1px solid transparent;
+      border: 1.5px solid transparent;
       cursor: pointer;
       text-decoration: none;
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
+      white-space: nowrap;
     }
-    .btn-primary { background-color: var(--brand-primary); color: var(--white); }
-    .btn-primary:hover { background-color: #066313; }
-    .btn-accent { background-color: var(--brand-accent); color: var(--brand-dark); font-weight: 700; }
-    .btn-accent:hover { background-color: #3bcf00; }
-    .btn-danger { background-color: #FEE4E2; color: var(--feedback-danger); border-color: #FECDCA; }
-    .btn-danger:hover { background-color: var(--feedback-danger); color: var(--white); }
-    .btn-outline { background: transparent; border-color: var(--border); color: var(--text-primary); }
-    .btn-outline:hover { border-color: var(--brand-primary); color: var(--brand-primary); }
-    .btn-sm { padding: 6px 12px; font-size: 13px; }
-
-    /* Forms */
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 16px;
+    .btn-primary {
+      background-color: var(--brand-primary);
+      color: var(--white);
+      box-shadow: 0 4px 12px rgba(8, 123, 24, 0.25);
     }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    .btn-primary:hover {
+      background-color: #066213;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(8, 123, 24, 0.35);
     }
-    .form-group.col-span-2 { grid-column: span 2; }
-    .form-group.col-span-3 { grid-column: span 3; }
-    label {
-      font-size: 13px;
-      font-weight: 600;
+    .btn-accent {
+      background-color: var(--brand-accent);
+      color: var(--brand-dark);
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(66, 217, 0, 0.3);
+    }
+    .btn-accent:hover {
+      background-color: #38ba00;
+      transform: translateY(-1px);
+    }
+    .btn-outline {
+      background: transparent;
+      border-color: #D2DDD4;
       color: var(--text-primary);
     }
-    input, select, textarea {
-      padding: 10px 12px;
-      font-size: 14px;
-      font-family: inherit;
+    .btn-outline:hover {
+      border-color: var(--brand-primary);
+      color: var(--brand-primary);
+      background-color: rgba(8, 123, 24, 0.05);
+    }
+    .btn-danger {
+      background-color: #FEE4E2;
+      color: var(--feedback-danger);
+      border-color: #FECDCA;
+    }
+    .btn-danger:hover {
+      background-color: var(--feedback-danger);
+      color: var(--white);
+    }
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 13px;
+      border-radius: 8px;
+    }
+
+    /* Barra de Filtros e Busca no Admin */
+    .admin-filter-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 14px 18px;
+      margin-bottom: 24px;
+    }
+    .admin-search-wrap {
+      flex: 1;
+      min-width: 220px;
+      position: relative;
+    }
+    .admin-search-wrap input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
       border: 1.5px solid var(--border);
       border-radius: var(--radius-input);
-      background-color: var(--surface-muted);
+      font-size: 14px;
+      background: var(--white);
     }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--brand-primary);
+    .admin-search-wrap svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      fill: var(--text-secondary);
+    }
+    .admin-filter-select {
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-input);
+      font-size: 13.5px;
+      font-weight: 600;
       background-color: var(--white);
+      color: var(--text-primary);
     }
-    .help-text {
-      font-size: 12px;
+    .view-mode-toggle {
+      display: flex;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-input);
+      overflow: hidden;
+      background: var(--white);
+      margin-left: auto;
+    }
+    .view-mode-btn {
+      padding: 8px 14px;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .view-mode-btn.active {
+      background: var(--brand-primary);
+      color: var(--white);
+    }
+
+    /* Grade de Imóveis (Cards idênticos ao site) */
+    .admin-properties-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .admin-prop-card {
+      background-color: var(--white);
+      border-radius: var(--radius-card);
+      border: 1.5px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      position: relative;
+    }
+    .admin-prop-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+      border-color: #C2D5C6;
+    }
+    .admin-prop-media {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+      background-color: #0d381b;
+    }
+    .admin-prop-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .admin-prop-card:hover .admin-prop-media img {
+      transform: scale(1.03);
+    }
+    .admin-prop-badges {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      gap: 6px;
+      z-index: 4;
+    }
+    .admin-badge-venda {
+      background-color: var(--brand-accent);
+      color: var(--brand-dark);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+    .admin-badge-aluguel {
+      background-color: var(--brand-dark);
+      color: var(--white);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+    .admin-badge-tipo {
+      background-color: rgba(255, 255, 255, 0.95);
+      color: var(--brand-dark);
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+    }
+    .admin-prop-status-pill {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 4;
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .status-disponivel {
+      background: #E8F5E9;
+      color: #087B18;
+      border: 1px solid #C8E6C9;
+    }
+    .status-alugado {
+      background: #FEE4E2;
+      color: #B42318;
+      border: 1px solid #FECDCA;
+    }
+
+    .admin-prop-body {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .admin-prop-location {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--brand-primary);
+      margin-bottom: 6px;
+    }
+    .admin-prop-location svg {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+    }
+    .admin-prop-title {
+      font-family: var(--font-heading);
+      font-size: 16.5px;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.35;
+      margin-bottom: 12px;
+    }
+    .admin-prop-specs {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .admin-spec-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12.5px;
+      font-weight: 600;
       color: var(--text-secondary);
     }
-
-    /* Map in Admin */
-    #admin-map {
-      width: 100%;
-      height: 320px;
-      border-radius: var(--radius-input);
-      border: 1.5px solid var(--border);
-      margin-top: 8px;
+    .admin-spec-item svg {
+      width: 16px;
+      height: 16px;
+      fill: var(--brand-primary);
+    }
+    .admin-prop-price {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--brand-dark);
+      margin-bottom: 16px;
     }
 
-    /* Table */
+    /* Barra de Ações no Card */
+    .admin-card-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border-top: 1.5px solid var(--border);
+      padding-top: 14px;
+      margin-top: auto;
+    }
+    .admin-card-actions button {
+      flex: 1;
+    }
+
+    /* Tabela Responsiva */
     .table-responsive {
       overflow-x: auto;
     }
@@ -233,43 +534,78 @@
       background-color: var(--surface-muted);
       color: var(--brand-dark);
       font-family: var(--font-heading);
-      font-weight: 700;
-      padding: 12px 14px;
+      font-weight: 800;
+      padding: 14px 16px;
       border-bottom: 2px solid var(--border);
     }
     td {
-      padding: 12px 14px;
+      padding: 14px 16px;
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
     tr:hover td { background-color: #FAFDFB; }
 
-    /* Badges */
-    .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: var(--radius-pill);
-      font-size: 11.5px;
-      font-weight: 700;
-      text-transform: uppercase;
+    /* Formulários */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 18px;
     }
-    .badge-success { background-color: #E8F5E9; color: var(--brand-primary); }
-    .badge-warning { background-color: #FEF0C7; color: var(--feedback-warning); }
-    .badge-danger { background-color: #FEE4E2; color: var(--feedback-danger); }
-    .badge-info { background-color: #E0F2FE; color: #0284C7; }
-
-    /* Code export box */
-    .code-box {
-      width: 100%;
-      height: 280px;
-      font-family: 'Consolas', monospace;
-      font-size: 12.5px;
-      padding: 14px;
-      background-color: #1A241C;
-      color: #A3E635;
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group.col-span-2 { grid-column: span 2; }
+    .form-group.col-span-3 { grid-column: span 3; }
+    label {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    input, select, textarea {
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 1.5px solid var(--border);
       border-radius: var(--radius-input);
-      border: 1px solid var(--border);
-      resize: vertical;
+      background-color: var(--surface-muted);
+      transition: all 0.2s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      background-color: var(--white);
+      box-shadow: 0 0 0 3px rgba(8, 123, 24, 0.12);
+    }
+    .help-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Área de Upload de Foto */
+    .photo-upload-zone {
+      border: 2px dashed #B8D1BE;
+      background: #F4F9F5;
+      border-radius: var(--radius-card);
+      padding: 24px;
+      text-align: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .photo-upload-zone:hover {
+      border-color: var(--brand-primary);
+      background: #EAF4EC;
+    }
+
+    /* Mapa no Admin */
+    #admin-map {
+      width: 100%;
+      height: 340px;
+      border-radius: var(--radius-input);
+      border: 1.5px solid var(--border);
+      margin-top: 8px;
     }
 
     /* Toast */
@@ -279,68 +615,135 @@
       right: 24px;
       background-color: var(--brand-dark);
       color: var(--white);
-      padding: 14px 22px;
-      border-radius: 10px;
-      border-left: 5px solid var(--brand-accent);
-      box-shadow: var(--shadow-hover);
+      padding: 16px 24px;
+      border-radius: 12px;
+      border-left: 6px solid var(--brand-accent);
+      box-shadow: var(--shadow-elevated);
       display: none;
-      z-index: 2000;
-      font-weight: 600;
+      z-index: 99999;
+      font-weight: 700;
+      font-size: 14px;
+      animation: toastSlide 0.3s ease;
     }
+    @keyframes toastSlide {
+      from { transform: translateX(50px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Badges Genéricos */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .badge-success { background-color: #E8F5E9; color: var(--brand-primary); }
+    .badge-warning { background-color: #FEF0C7; color: var(--feedback-warning); }
+    .badge-danger { background-color: #FEE4E2; color: var(--feedback-danger); }
+    .badge-info { background-color: #E0F2FE; color: #0284C7; }
 
     @media (max-width: 900px) {
       .form-grid { grid-template-columns: 1fr; }
       .form-group.col-span-2, .form-group.col-span-3 { grid-column: span 1; }
+      .admin-properties-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
+  <!-- Topbar Institucional -->
   <header class="admin-header">
     <div class="brand-group">
-      <img src="logo.jpg" alt="Logo">
-      <div>
+      <div class="brand-logo-wrap">
+        <img src="logo.jpg" alt="Logo Chave do Bico">
+      </div>
+      <div class="brand-info">
         <h1>CHAVE DO BICO</h1>
-        <span>Painel Administrativo de Imóveis & Localização</span>
+        <span>Painel de Gestão Imobiliária & Localização</span>
       </div>
     </div>
-    <div class="header-links">
-      <span id="firebase-status-badge" class="badge badge-success" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:6px 14px;">
-        ⚡ Nuvem Conectada (Tempo Real)
-      </span>
-      <a href="index.html" class="btn btn-outline" style="color: #fff; border-color: rgba(255,255,255,0.4);">
-        ← Ver Site
+    <div class="header-actions">
+      <div class="cloud-badge" id="cloud-badge" title="Banco de Dados Firestore e Armazenamento em Nuvem">
+        <span class="pulse-dot"></span>
+        <span>Nuvem em Tempo Real Ativa</span>
+      </div>
+      <a href="index.html" class="btn btn-outline" style="color: #fff; border-color: rgba(255,255,255,0.4);" target="_blank" rel="noopener">
+        🌐 Ver Site Público
       </a>
-      <button type="button" class="btn btn-accent" id="btn-exportar-topo">
-        💾 Exportar Dados
+      <button type="button" class="btn btn-accent" id="btn-topo-novo">
+        ➕ Novo Imóvel
       </button>
     </div>
   </header>
 
   <main class="admin-container">
-    <!-- Abas -->
+    <!-- Navegação por Abas -->
     <nav class="admin-tabs" role="tablist">
-      <button class="tab-btn active" data-tab="tab-imoveis">🏡 Imóveis Cadastrados (<span id="contagem-imoveis">0</span>)</button>
-      <button class="tab-btn" data-tab="tab-novo">➕ Novo / Editar Imóvel</button>
+      <button class="tab-btn active" data-tab="tab-imoveis">🏡 Catálogo de Imóveis (<span id="contagem-imoveis">0</span>)</button>
+      <button class="tab-btn" data-tab="tab-novo" id="tab-btn-novo">➕ Cadastrar / Editar Imóvel</button>
       <button class="tab-btn" data-tab="tab-bairros">📍 Bairros & Regiões (<span id="contagem-bairros">0</span>)</button>
       <button class="tab-btn" data-tab="tab-config">⚙️ Contatos Oficiais</button>
-      <button class="tab-btn" data-tab="tab-exportar">📥 Exportar / Backup</button>
+      <button class="tab-btn" data-tab="tab-exportar">📥 Backup / Exportar</button>
     </nav>
 
-    <!-- TAB 1: LISTA DE IMÓVEIS -->
+    <!-- TAB 1: CATÁLOGO DE IMÓVEIS (CARDS OU TABELA) -->
     <section id="tab-imoveis" class="tab-panel active">
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+      <div class="admin-card">
+        <div class="admin-card-header">
           <div>
             <h2>Catálogo de Imóveis</h2>
-            <p class="sub">Gerencie todos os anúncios exibidos na vitrine e no mapa interativo.</p>
+            <p class="sub">Controle os anúncios exibidos no carrossel, na vitrine e no mapa interativo em tempo real.</p>
           </div>
-          <button type="button" class="btn btn-primary" id="btn-abrir-novo">
+          <button type="button" class="btn btn-primary" onclick="abrirNovoImovel()">
             ➕ Cadastrar Novo Imóvel
           </button>
         </div>
 
-        <div class="table-responsive">
+        <!-- Barra de Busca, Filtros e Alternância de Visualização -->
+        <div class="admin-filter-bar">
+          <div class="admin-search-wrap">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="admin-search" placeholder="Buscar por título, bairro ou tipo...">
+          </div>
+
+          <select id="filtro-status" class="admin-filter-select">
+            <option value="todos">Todos os Status</option>
+            <option value="publicado">🟢 Disponíveis (No Site)</option>
+            <option value="alugado">🔴 Alugados / Pausados</option>
+          </select>
+
+          <select id="filtro-finalidade" class="admin-filter-select">
+            <option value="todas">Todas Finalidades</option>
+            <option value="ALUGUEL">Aluguel</option>
+            <option value="VENDA">Venda</option>
+          </select>
+
+          <select id="filtro-tipo" class="admin-filter-select">
+            <option value="todos">Todos os Tipos</option>
+            <option value="CASA">Casas</option>
+            <option value="LOTE">Lotes / Terrenos</option>
+            <option value="KITNET">Kitnets</option>
+            <option value="COMERCIAL">Comerciais</option>
+            <option value="APARTAMENTO">Apartamentos</option>
+          </select>
+
+          <div class="view-mode-toggle">
+            <button type="button" class="view-mode-btn active" id="btn-view-cards" onclick="definirVisualizacao('cards')">
+              🗂️ Cards
+            </button>
+            <button type="button" class="view-mode-btn" id="btn-view-table" onclick="definirVisualizacao('table')">
+              📋 Tabela
+            </button>
+          </div>
+        </div>
+
+        <!-- Visualização em Cards (Igual ao Site) -->
+        <div id="container-cards" class="admin-properties-grid"></div>
+
+        <!-- Visualização em Tabela -->
+        <div id="container-tabela" class="table-responsive" style="display: none;">
           <table>
             <thead>
               <tr>
@@ -350,8 +753,8 @@
                 <th>Tipo</th>
                 <th>Bairro</th>
                 <th>Preço</th>
-                <th>Geolocalização</th>
-                <th>Status</th>
+                <th>Localização</th>
+                <th>Situação</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -361,11 +764,11 @@
       </div>
     </section>
 
-    <!-- TAB 2: NOVO / EDITAR IMÓVEL -->
+    <!-- TAB 2: CADASTRAR OU EDITAR IMÓVEL -->
     <section id="tab-novo" class="tab-panel">
-      <div class="card">
+      <div class="admin-card">
         <h2 id="form-titulo">Cadastrar Novo Imóvel</h2>
-        <p class="sub">Preencha os dados abaixo e clique no mapa para definir as coordenadas do imóvel.</p>
+        <p class="sub">Preencha as informações completas. O anúncio atualiza na nuvem e aparece na mesma hora no site.</p>
 
         <form id="form-imovel">
           <input type="hidden" id="imovel-id">
@@ -373,7 +776,7 @@
           <div class="form-grid">
             <div class="form-group col-span-2">
               <label for="campo-titulo">Título Descritivo do Imóvel *</label>
-              <input type="text" id="campo-titulo" required placeholder="Ex: Casa Ampla 3 Quartos com Quintal">
+              <input type="text" id="campo-titulo" required placeholder="Ex: Casa Ampla 3 Quartos com Quintal e Garagem">
             </div>
 
             <div class="form-group">
@@ -406,7 +809,7 @@
             </div>
 
             <div class="form-group">
-              <label for="campo-preco">Preço Exibido</label>
+              <label for="campo-preco">Preço Exibido no Anúncio</label>
               <input type="text" id="campo-preco" placeholder="Ex: R$ 1.200/mês ou R$ 68.000">
             </div>
 
@@ -426,7 +829,7 @@
 
             <div class="form-group">
               <label for="campo-quartos">Quartos</label>
-              <input type="number" id="campo-quartos" min="0" placeholder="Ex: 3 (ou deixe vazio)">
+              <input type="number" id="campo-quartos" min="0" placeholder="Ex: 3 (ou vazio para lotes)">
             </div>
 
             <div class="form-group">
@@ -439,47 +842,49 @@
               <input type="text" id="campo-area" placeholder="Ex: 140 m² ou 360 m² (12x30)">
             </div>
 
+            <!-- Upload de Fotos -->
             <div class="form-group col-span-2">
               <label>Fotografia Principal do Imóvel *</label>
-              <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+              
+              <div class="photo-upload-zone" onclick="document.getElementById('campo-foto-file').click()">
                 <input type="file" id="campo-foto-file" accept="image/*" style="display: none;">
-                <button type="button" class="btn btn-primary btn-sm" id="btn-escolher-foto" onclick="document.getElementById('campo-foto-file').click()">
-                  📷 Escolher Foto do Celular / Computador
-                </button>
-                <span id="nome-foto-selecionada" style="font-size: 13px; color: var(--text-secondary);">Nenhum arquivo novo selecionado</span>
+                <div style="font-size: 32px; margin-bottom: 6px;">📷</div>
+                <strong style="color: var(--brand-primary); font-size: 15px;">Clique para escolher foto do celular ou computador</strong>
+                <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Formatos: JPG, PNG, WEBP (salvo automaticamente na nuvem do Google)</p>
+                <span id="nome-foto-selecionada" style="display: inline-block; margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--brand-dark);"></span>
               </div>
 
-              <!-- Pré-visualização da Foto -->
-              <div id="foto-preview-wrapper" style="display: none; margin-bottom: 10px;">
+              <div id="foto-preview-wrapper" style="display: none; margin-top: 14px;">
                 <div style="position: relative; display: inline-block;">
-                  <img id="foto-preview-img" src="" alt="Prévia da foto" style="max-height: 150px; max-width: 100%; border-radius: 8px; border: 2px solid var(--brand-accent); object-fit: cover;">
-                  <button type="button" id="btn-remover-foto" style="position: absolute; top: -8px; right: -8px; background: #B42318; color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 12px; font-weight: bold;">✕</button>
+                  <img id="foto-preview-img" src="" alt="Prévia" style="max-height: 180px; border-radius: 12px; border: 2.5px solid var(--brand-accent); object-fit: cover;">
+                  <button type="button" id="btn-remover-foto" style="position: absolute; top: -8px; right: -8px; background: #B42318; color: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 13px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">✕</button>
                 </div>
               </div>
 
-              <!-- Barra de Progresso de Upload para o Firebase Storage -->
-              <div id="upload-progress-container" style="display: none; margin-bottom: 10px;">
+              <!-- Barra de Progresso de Upload -->
+              <div id="upload-progress-container" style="display: none; margin-top: 12px;">
                 <div style="height: 8px; width: 100%; background: #e2e8f0; border-radius: 9999px; overflow: hidden; margin-bottom: 4px;">
                   <div id="upload-progress-bar" style="height: 100%; width: 0%; background: var(--brand-accent); transition: width 0.2s ease;"></div>
                 </div>
-                <span id="upload-progress-text" style="font-size: 12px; color: var(--brand-primary); font-weight: 700;">Enviando foto para a nuvem... 0%</span>
+                <span id="upload-progress-text" style="font-size: 12.5px; color: var(--brand-primary); font-weight: 800;">Enviando foto para a nuvem... 0%</span>
               </div>
 
-              <input type="url" id="campo-imagem" placeholder="Ou se preferir, cole o link direto de uma imagem aqui...">
+              <input type="url" id="campo-imagem" placeholder="Ou se preferir, cole o link direto de uma imagem aqui..." style="margin-top: 8px;">
             </div>
 
             <div class="form-group">
-              <label for="campo-publicado">Situação do Anúncio</label>
+              <label for="campo-publicado">Situação Inicial do Anúncio</label>
               <select id="campo-publicado">
-                <option value="true">Publicado (Visível no site e mapa)</option>
-                <option value="false">Rascunho / Pausado</option>
+                <option value="true">🟢 Disponível (Visível no site)</option>
+                <option value="false">🔴 Alugado / Pausado (Oculto no site)</option>
               </select>
             </div>
 
+            <!-- Mapa Administrativo para Coordenadas -->
             <div class="form-group col-span-3">
-              <label>Localização Geográfica no Mapa (Clique no mapa para marcar a posição):</label>
+              <label>Localização Geográfica no Mapa (Clique para marcar o ponto):</label>
               <div id="admin-map"></div>
-              <span class="help-text">Dica: Dê zoom no mapa e clique próximo ao local do imóvel para capturar as coordenadas automaticamente.</span>
+              <span class="help-text">Dica: Dê zoom no mapa e clique próximo ao local do imóvel para capturar a localização automaticamente.</span>
             </div>
 
             <div class="form-group">
@@ -498,12 +903,11 @@
                 <option value="aproximada">Aproximada (Recomendado — protege a privacidade do proprietário)</option>
                 <option value="exata">Exata (Apenas se expressamente autorizado)</option>
               </select>
-              <span class="help-text">Por padrão, a localização aproximada desenha um raio protetor sem revelar a casa exata.</span>
             </div>
           </div>
 
-          <div style="display: flex; gap: 12px; margin-top: 12px;">
-            <button type="submit" class="btn btn-primary" id="btn-salvar-imovel">💾 Salvar Imóvel</button>
+          <div style="display: flex; gap: 12px; margin-top: 14px;">
+            <button type="submit" class="btn btn-primary" id="btn-salvar-imovel">💾 Salvar Imóvel na Nuvem</button>
             <button type="button" class="btn btn-outline" id="btn-cancelar-edicao">Cancelar</button>
           </div>
         </form>
@@ -512,7 +916,7 @@
 
     <!-- TAB 3: BAIRROS E REGIÕES -->
     <section id="tab-bairros" class="tab-panel">
-      <div class="card">
+      <div class="admin-card">
         <h2>Bairros e Regiões de Augustinópolis</h2>
         <p class="sub">Organize as regiões e bairros disponíveis na busca e no guia de localidades.</p>
 
@@ -552,7 +956,7 @@
 
     <!-- TAB 4: CONTATOS OFICIAIS -->
     <section id="tab-config" class="tab-panel">
-      <div class="card">
+      <div class="admin-card">
         <h2>Dados Institucionais e Contato Oficial</h2>
         <p class="sub">Centralize as informações oficiais da marca CHAVE DO BICO que aparecem em todo o site.</p>
 
@@ -586,13 +990,11 @@
       </div>
     </section>
 
-    <!-- TAB 5: EXPORTAR E BACKUP -->
+    <!-- TAB 5: BACKUP E EXPORTAÇÃO -->
     <section id="tab-exportar" class="tab-panel">
-      <div class="card">
-        <h2>Exportação de Dados (`site-data.js`)</h2>
-        <p class="sub">
-          Como este site opera em modo estático de alta performance, todas as alterações podem ser salvas no <strong>localStorage</strong> do seu navegador e baixadas como o arquivo oficial <code>data/site-data.js</code>.
-        </p>
+      <div class="admin-card">
+        <h2>Exportação e Backup Offline</h2>
+        <p class="sub">Você pode baixar uma cópia de segurança de todos os dados salvos para o arquivo <code>data/site-data.js</code>.</p>
 
         <div style="display: flex; gap: 12px; margin-bottom: 16px;">
           <button type="button" class="btn btn-primary" id="btn-baixar-js">📥 Baixar Arquivo site-data.js</button>
@@ -600,7 +1002,7 @@
           <button type="button" class="btn btn-danger" id="btn-resetar-padrao" style="margin-left: auto;">⚠️ Restaurar Padrões</button>
         </div>
 
-        <textarea class="code-box" id="codigo-exportacao" readonly></textarea>
+        <textarea id="codigo-exportacao" style="width: 100%; height: 260px; font-family: monospace; font-size: 12px; padding: 12px; border-radius: 8px; border: 1.5px solid var(--border); background: #17231A; color: #A3E635;" readonly></textarea>
       </div>
     </section>
   </main>
@@ -622,6 +1024,7 @@
     // Recupera dados do localStorage ou usa o site-data.js inicial
     let DB = null;
     const STORAGE_KEY = 'CHAVE_DO_BICO_LOCAL_DATA';
+    let visualizacaoAtual = 'cards'; // 'cards' ou 'table'
 
     function carregarDados() {
       const salvo = localStorage.getItem(STORAGE_KEY);
@@ -632,7 +1035,7 @@
           DB = window.CHAVE_DO_BICO_DATA;
         }
       } else {
-        DB = window.CHAVE_DO_BICO_DATA;
+        DB = window.CHAVE_DO_BICO_DATA || { imoveis: [], bairros: [], config: {} };
       }
     }
 
@@ -641,7 +1044,7 @@
       gerarExportacao();
       atualizarContadores();
       if (!silencioso) {
-        mostrarToast('Alterações salvas no navegador!');
+        mostrarToast('Alterações salvas localmente!');
       }
     }
 
@@ -649,104 +1052,164 @@
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.style.display = 'block';
-      setTimeout(() => { t.style.display = 'none'; }, 3000);
+      setTimeout(() => { t.style.display = 'none'; }, 3500);
     }
 
-    // Inicialização do Mapa Administrativo
-    let adminMap = null;
-    let adminMarker = null;
+    // Alternar Visualização entre Cards e Tabela
+    window.definirVisualizacao = function(modo) {
+      visualizacaoAtual = modo;
+      document.getElementById('btn-view-cards').classList.toggle('active', modo === 'cards');
+      document.getElementById('btn-view-table').classList.toggle('active', modo === 'table');
+      document.getElementById('container-cards').style.display = modo === 'cards' ? 'grid' : 'none';
+      document.getElementById('container-tabela').style.display = modo === 'table' ? 'block' : 'none';
+      renderizarCatalogo();
+    };
 
-    function initAdminMap() {
-      if (adminMap) return;
-      const centro = DB.config.mapaCentro || { lat: -5.4686, lng: -47.8867, zoom: 14 };
-      adminMap = L.map('admin-map').setView([centro.lat, centro.lng], 14);
+    // Filtros e Busca em Tempo Real
+    document.getElementById('admin-search').addEventListener('input', renderizarCatalogo);
+    document.getElementById('filtro-status').addEventListener('change', renderizarCatalogo);
+    document.getElementById('filtro-finalidade').addEventListener('change', renderizarCatalogo);
+    document.getElementById('filtro-tipo').addEventListener('change', renderizarCatalogo);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap'
-      }).addTo(adminMap);
+    function obterImoveisFiltrados() {
+      if (!DB.imoveis) return [];
+      const busca = document.getElementById('admin-search').value.toLowerCase().trim();
+      const status = document.getElementById('filtro-status').value;
+      const finalidade = document.getElementById('filtro-finalidade').value;
+      const tipo = document.getElementById('filtro-tipo').value;
 
-      adminMap.on('click', function(e) {
-        const lat = e.latlng.lat.toFixed(6);
-        const lng = e.latlng.lng.toFixed(6);
-        document.getElementById('campo-lat').value = lat;
-        document.getElementById('campo-lng').value = lng;
-        posicionarMarcador(lat, lng);
-      });
-    }
-
-    function posicionarMarcador(lat, lng) {
-      if (!adminMap) return;
-      if (adminMarker) adminMap.removeLayer(adminMarker);
-      adminMarker = L.marker([lat, lng]).addTo(adminMap);
-      adminMap.panTo([lat, lng]);
-    }
-
-    // Navegação por Abas
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        const targetId = btn.getAttribute('data-tab');
-        document.getElementById(targetId).classList.add('active');
-
-        if (targetId === 'tab-novo') {
-          setTimeout(() => {
-            initAdminMap();
-            adminMap.invalidateSize();
-          }, 150);
+      return DB.imoveis.filter(i => {
+        // Busca textual
+        if (busca) {
+          const texto = [i.titulo, i.bairro, i.tipo, i.preco, i.area].join(' ').toLowerCase();
+          if (!texto.includes(busca)) return false;
         }
+        // Filtro de Status
+        if (status === 'publicado' && i.publicado === false) return false;
+        if (status === 'alugado' && i.publicado !== false) return false;
+
+        // Filtro de Finalidade
+        if (finalidade !== 'todas' && (i.finalidade || '').toUpperCase() !== finalidade) return false;
+
+        // Filtro de Tipo
+        if (tipo !== 'todos' && (i.tipo || '').toUpperCase() !== tipo) return false;
+
+        return true;
       });
-    });
+    }
 
-    document.getElementById('btn-abrir-novo').addEventListener('click', () => {
-      limparFormularioImovel();
-      document.querySelector('[data-tab="tab-novo"]').click();
-    });
-
-    // Renderizar Tabela de Imóveis
-    function renderTabelaImoveis() {
-      const corpo = document.getElementById('tabela-imoveis-corpo');
-      corpo.innerHTML = '';
-
-      DB.imoveis.forEach(imovel => {
-        const temCoord = imovel.latitude && imovel.longitude;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><img src="${imovel.imagem || 'logo.jpg'}" style="width: 50px; height: 35px; object-fit: cover; border-radius: 4px;"></td>
-          <td><strong>${imovel.titulo}</strong></td>
-          <td><span class="badge ${imovel.finalidade === 'VENDA' ? 'badge-success' : 'badge-info'}">${imovel.finalidade}</span></td>
-          <td>${imovel.tipo}</td>
-          <td>${imovel.bairro}</td>
-          <td>${imovel.preco || 'Sob consulta'}</td>
-          <td>
-            ${temCoord 
-              ? `<span class="badge badge-success">📍 ${imovel.precisaoLocalizacao === 'exata' ? 'Exata' : 'Aproximada'}</span>`
-              : `<span class="badge badge-warning">⚠️ Pendente de Coordenadas</span>`}
-          </td>
-          <td>
-            <span class="badge ${imovel.publicado !== false ? 'badge-success' : 'badge-danger'}">
-              ${imovel.publicado !== false ? 'Publicado' : 'Pausado'}
-            </span>
-          </td>
-          <td>
-            <div style="display: flex; gap: 6px;">
-              <button type="button" class="btn btn-outline btn-sm" onclick="editarImovel(${imovel.id})">✏️ Editar</button>
-              <button type="button" class="btn btn-danger btn-sm" onclick="excluirImovel(${imovel.id})">🗑️</button>
-            </div>
-          </td>
-        `;
-        corpo.appendChild(tr);
-      });
+    // Renderizar Catálogo (Cards e Tabela)
+    function renderizarCatalogo() {
+      const lista = obterImoveisFiltrados();
       atualizarContadores();
+
+      // 1. Renderizar Cards (Idênticos ao Site)
+      const containerCards = document.getElementById('container-cards');
+      containerCards.innerHTML = '';
+
+      if (lista.length === 0) {
+        containerCards.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 48px; background: #fff; border-radius: 16px; border: 1.5px dashed var(--border);"><div style="font-size: 38px; margin-bottom: 8px;">🏡</div><h3 style="font-family: var(--font-heading); color: var(--brand-dark);">Nenhum imóvel encontrado</h3><p style="color: var(--text-secondary); margin-top: 4px;">Tente alterar os filtros ou cadastre um novo imóvel.</p><button type="button" class="btn btn-primary btn-sm" onclick="abrirNovoImovel()" style="margin-top: 14px;">➕ Cadastrar Novo Imóvel</button></div>';
+      } else {
+        lista.forEach(imovel => {
+          const estaPublicado = imovel.publicado !== false;
+          const card = document.createElement('article');
+          card.className = 'admin-prop-card';
+
+          const badgeFinalidade = imovel.finalidade === 'VENDA' 
+            ? '<span class="admin-badge-venda">Venda</span>' 
+            : '<span class="admin-badge-aluguel">Aluguel</span>';
+
+          const statusPill = estaPublicado
+            ? '<span class="admin-prop-status-pill status-disponivel">🟢 Disponível</span>'
+            : '<span class="admin-prop-status-pill status-alugado">🔴 Alugado / Pausado</span>';
+
+          let specs = '';
+          if (imovel.quartos) specs += '<div class="admin-spec-item" title="' + imovel.quartos + ' Quartos"><svg viewBox="0 0 24 24"><path d="M19 7h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4zm1 8h-7V9h6c1.1 0 2 .9 2 2v4z"/></svg><span>' + imovel.quartos + ' qts</span></div>';
+          if (imovel.banheiros) specs += '<div class="admin-spec-item" title="' + imovel.banheiros + ' Banheiros"><svg viewBox="0 0 24 24"><path d="M20 13V4.83C20 3.27 18.73 2 17.17 2c-.75 0-1.47.3-2 .83l-1.25 1.25c-.16-.05-.33-.08-.51-.08-.78 0-1.46.47-1.78 1.15L9.22 8.35C8.92 8.13 8.55 8 8.15 8 7.02 8 6.09 8.92 6.09 10.05v2.95H4v2h16v-2h-2zm-8.85-6.55l1.6-1.6c.2-.2.51-.2.71 0s.2.51 0 .71l-1.6 1.6c-.2.2-.51.2-.71 0s-.2-.51 0-.71zM4 17h16v4H4v-4z"/></svg><span>' + imovel.banheiros + ' banh</span></div>';
+          if (imovel.area) specs += '<div class="admin-spec-item" title="Área"><svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 6h-2V7h2v4zm-4-4v4h-4V7h4zm-6 0v4H5V7h4zm-4 6h4v4H5v-4zm6 4v-4h4v4h-4zm6 0v-4h2v4h-2z"/></svg><span>' + imovel.area + '</span></div>';
+
+          card.innerHTML = `
+            <div class="admin-prop-media">
+              <div class="admin-prop-badges">
+                ${badgeFinalidade}
+                <span class="admin-badge-tipo">${imovel.tipo}</span>
+              </div>
+              ${statusPill}
+              <img src="${imovel.imagem || 'logo.jpg'}" alt="${imovel.titulo}">
+            </div>
+            <div class="admin-prop-body">
+              <div class="admin-prop-location">
+                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span>${imovel.bairro || 'Augustinópolis'}, Augustinópolis - TO</span>
+              </div>
+              <h3 class="admin-prop-title">${imovel.titulo}</h3>
+              <div class="admin-prop-specs">${specs}</div>
+              <div class="admin-prop-price">${imovel.preco || 'Sob consulta'}</div>
+
+              <div class="admin-card-actions">
+                <button type="button" class="btn btn-outline btn-sm" onclick="editarImovel('${imovel.id}')" title="Editar informações">
+                  ✏️ Editar
+                </button>
+                ${estaPublicado
+                  ? `<button type="button" class="btn btn-outline btn-sm" onclick="togglePublicadoImovel('${imovel.id}', false)" title="Marcar como alugado/pausado (oculta do site público)">⏸️ Alugado</button>`
+                  : `<button type="button" class="btn btn-primary btn-sm" onclick="togglePublicadoImovel('${imovel.id}', true)" title="Reativar anúncio (volta a aparecer no site público)">▶️ Reativar</button>`}
+                <button type="button" class="btn btn-danger btn-sm" onclick="excluirImovelFirebase('${imovel.id}')" title="Excluir permanentemente da nuvem" style="flex: 0 0 38px; padding: 6px 0;">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          `;
+          containerCards.appendChild(card);
+        });
+      }
+
+      // 2. Renderizar Tabela
+      const corpoTabela = document.getElementById('tabela-imoveis-corpo');
+      corpoTabela.innerHTML = '';
+      if (lista.length === 0) {
+        corpoTabela.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-secondary);">Nenhum imóvel encontrado.</td></tr>';
+      } else {
+        lista.forEach(imovel => {
+          const temCoord = imovel.latitude && imovel.longitude;
+          const estaPublicado = imovel.publicado !== false;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><img src="${imovel.imagem || 'logo.jpg'}" style="width: 52px; height: 38px; object-fit: cover; border-radius: 6px;"></td>
+            <td><strong>${imovel.titulo}</strong></td>
+            <td><span class="badge ${imovel.finalidade === 'VENDA' ? 'badge-success' : 'badge-info'}">${imovel.finalidade}</span></td>
+            <td>${imovel.tipo}</td>
+            <td>${imovel.bairro}</td>
+            <td>${imovel.preco || 'Sob consulta'}</td>
+            <td>
+              ${temCoord 
+                ? '<span class="badge badge-success">📍 ' + (imovel.precisaoLocalizacao === 'exata' ? 'Exata' : 'Aproximada') + '</span>'
+                : '<span class="badge badge-warning">⚠️ Sem Coordenadas</span>'}
+            </td>
+            <td>
+              <span class="badge ${estaPublicado ? 'badge-success' : 'badge-danger'}">
+                ${estaPublicado ? 'Disponível' : 'Alugado'}
+              </span>
+            </td>
+            <td>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="editarImovel('${imovel.id}')">✏️</button>
+                ${estaPublicado 
+                  ? `<button type="button" class="btn btn-outline btn-sm" onclick="togglePublicadoImovel('${imovel.id}', false)">⏸️</button>`
+                  : `<button type="button" class="btn btn-primary btn-sm" onclick="togglePublicadoImovel('${imovel.id}', true)">▶️</button>`}
+                <button type="button" class="btn btn-danger btn-sm" onclick="excluirImovelFirebase('${imovel.id}')">🗑️</button>
+              </div>
+            </td>
+          `;
+          corpoTabela.appendChild(tr);
+        });
+      }
     }
 
     // Preencher Select de Bairros no Form
     function popularSelectBairros() {
       const select = document.getElementById('campo-bairro');
       select.innerHTML = '<option value="">Selecione o bairro...</option>';
-      DB.bairros.filter(b => b.ativo !== false).sort((a,b) => a.nome.localeCompare(b.nome)).forEach(b => {
+      (DB.bairros || []).filter(b => b.ativo !== false).sort((a,b) => a.nome.localeCompare(b.nome)).forEach(b => {
         const opt = document.createElement('option');
         opt.value = b.nome;
         opt.textContent = b.nome;
@@ -754,13 +1217,13 @@
       });
     }
 
-    // Preview da Foto Selecionada
+    // Preview de Foto Selecionada
     let arquivoFotoSelecionada = null;
     document.getElementById('campo-foto-file').addEventListener('change', function(e) {
       const file = e.target.files && e.target.files[0];
       if (file) {
         arquivoFotoSelecionada = file;
-        document.getElementById('nome-foto-selecionada').textContent = file.name;
+        document.getElementById('nome-foto-selecionada').textContent = '✅ ' + file.name;
         const reader = new FileReader();
         reader.onload = function(evt) {
           document.getElementById('foto-preview-img').src = evt.target.result;
@@ -770,10 +1233,11 @@
       }
     });
 
-    document.getElementById('btn-remover-foto').addEventListener('click', function() {
+    document.getElementById('btn-remover-foto').addEventListener('click', function(e) {
+      e.stopPropagation();
       arquivoFotoSelecionada = null;
       document.getElementById('campo-foto-file').value = '';
-      document.getElementById('nome-foto-selecionada').textContent = 'Nenhum arquivo novo selecionado';
+      document.getElementById('nome-foto-selecionada').textContent = '';
       document.getElementById('foto-preview-wrapper').style.display = 'none';
       document.getElementById('foto-preview-img').src = '';
     });
@@ -783,13 +1247,13 @@
       try {
         if (window.CDB_FIREBASE) {
           await window.CDB_FIREBASE.alternarStatusImovel(id, novoStatus);
-          mostrarToast(novoStatus ? 'Imóvel REATIVADO no site!' : 'Imóvel marcado como ALUGADO (removido do site público)!');
+          mostrarToast(novoStatus ? '✅ Imóvel REATIVADO no site público!' : '⏸️ Imóvel marcado como ALUGADO (oculto no site público)!');
         } else {
           const imovel = DB.imoveis.find(i => String(i.id) === String(id));
           if (imovel) {
             imovel.publicado = novoStatus;
             salvarDados();
-            renderTabelaImoveis();
+            renderizarCatalogo();
           }
         }
       } catch (err) {
@@ -799,15 +1263,15 @@
 
     // Excluir Imóvel definitivamente do Firebase
     window.excluirImovelFirebase = async function(id) {
-      if (confirm('Deseja realmente EXCLUIR este anúncio definitivamente do banco de dados?')) {
+      if (confirm('Deseja realmente EXCLUIR este anúncio definitivamente do banco de dados na nuvem?')) {
         try {
           if (window.CDB_FIREBASE) {
             await window.CDB_FIREBASE.excluirImovel(id);
-            mostrarToast('Imóvel excluído da nuvem com sucesso!');
+            mostrarToast('🗑️ Imóvel excluído da nuvem com sucesso!');
           } else {
             DB.imoveis = DB.imoveis.filter(i => String(i.id) !== String(id));
             salvarDados();
-            renderTabelaImoveis();
+            renderizarCatalogo();
           }
         } catch (err) {
           alert('Erro ao excluir imóvel: ' + err.message);
@@ -865,10 +1329,9 @@
           salvarDados();
         }
 
-        // Limpa estado do formulário e retorna à aba de imóveis
         limparFormularioImovel();
         arquivoFotoSelecionada = null;
-        document.getElementById('nome-foto-selecionada').textContent = 'Nenhum arquivo novo selecionado';
+        document.getElementById('nome-foto-selecionada').textContent = '';
         document.getElementById('foto-preview-wrapper').style.display = 'none';
         progressBox.style.display = 'none';
         progressBar.style.width = '0%';
@@ -878,110 +1341,8 @@
         alert('Erro ao salvar imóvel: ' + err.message);
       } finally {
         btnSalvar.disabled = false;
-        btnSalvar.textContent = '💾 Salvar Imóvel';
+        btnSalvar.textContent = '💾 Salvar Imóvel na Nuvem';
       }
-    });
-
-    // Renderização Atualizada da Tabela com Ações em Tempo Real (Pausar/Alugado, Editar, Excluir)
-    function renderTabelaImoveis() {
-      const corpo = document.getElementById('tabela-imoveis-corpo');
-      corpo.innerHTML = '';
-
-      if (!DB.imoveis || DB.imoveis.length === 0) {
-        corpo.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-secondary);">Nenhum imóvel cadastrado ainda. Clique em "Cadastrar Novo Imóvel".</td></tr>';
-        atualizarContadores();
-        return;
-      }
-
-      DB.imoveis.forEach(imovel => {
-        const temCoord = imovel.latitude && imovel.longitude;
-        const estaPublicado = imovel.publicado !== false;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><img src="${imovel.imagem || 'logo.jpg'}" style="width: 50px; height: 36px; object-fit: cover; border-radius: 6px;"></td>
-          <td><strong>${imovel.titulo}</strong></td>
-          <td><span class="badge ${imovel.finalidade === 'VENDA' ? 'badge-success' : 'badge-info'}">${imovel.finalidade}</span></td>
-          <td>${imovel.tipo}</td>
-          <td>${imovel.bairro}</td>
-          <td>${imovel.preco || 'Sob consulta'}</td>
-          <td>
-            ${temCoord 
-              ? `<span class="badge badge-success">📍 ${imovel.precisaoLocalizacao === 'exata' ? 'Exata' : 'Aproximada'}</span>`
-              : `<span class="badge badge-warning">⚠️ Sem Coordenadas</span>`}
-          </td>
-          <td>
-            <span class="badge ${estaPublicado ? 'badge-success' : 'badge-danger'}">
-              ${estaPublicado ? 'Disponível' : 'Alugado / Pausado'}
-            </span>
-          </td>
-          <td>
-            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-              <button type="button" class="btn btn-outline btn-sm" onclick="editarImovel('${imovel.id}')" title="Editar dados">✏️ Editar</button>
-              ${estaPublicado 
-                ? `<button type="button" class="btn btn-outline btn-sm" onclick="togglePublicadoImovel('${imovel.id}', false)" title="Marcar como alugado/pausado (oculta do site)">⏸️ Alugado</button>`
-                : `<button type="button" class="btn btn-primary btn-sm" onclick="togglePublicadoImovel('${imovel.id}', true)" title="Reativar anúncio (volta a aparecer no site)">▶️ Reativar</button>`}
-              <button type="button" class="btn btn-danger btn-sm" onclick="excluirImovelFirebase('${imovel.id}')" title="Excluir permanentemente">🗑️</button>
-            </div>
-          </td>
-        `;
-        corpo.appendChild(tr);
-      });
-      atualizarContadores();
-    }
-
-    // Inicialização da Escuta em Tempo Real do Firestore no Admin
-    function iniciarSincronizacaoNuvemAdmin() {
-      if (window.CDB_FIREBASE) {
-        window.CDB_FIREBASE.ouvirImoveis(function(imoveisNuvem) {
-          DB.imoveis = imoveisNuvem;
-          renderTabelaImoveis();
-          console.log('[Admin] Imóveis atualizados em tempo real via Firestore:', imoveisNuvem.length);
-        });
-      }
-    }
-
-    // Formulário de Imóvel Antigo Desativado
-    const _dummySubmit = function() {
-      e.preventDefault();
-      const id = document.getElementById('imovel-id').value;
-      const latVal = document.getElementById('campo-lat').value.trim();
-      const lngVal = document.getElementById('campo-lng').value.trim();
-
-      const dados = {
-        titulo: document.getElementById('campo-titulo').value.trim(),
-        finalidade: document.getElementById('campo-finalidade').value,
-        tipo: document.getElementById('campo-tipo').value,
-        bairro: document.getElementById('campo-bairro').value,
-        cidade: 'Augustinópolis - TO',
-        preco: document.getElementById('campo-preco').value.trim(),
-        precoNumero: document.getElementById('campo-preco-numero').value ? Number(document.getElementById('campo-preco-numero').value) : null,
-        exibirPreco: document.getElementById('campo-exibir-preco').value === 'true',
-        quartos: document.getElementById('campo-quartos').value ? Number(document.getElementById('campo-quartos').value) : null,
-        banheiros: document.getElementById('campo-banheiros').value ? Number(document.getElementById('campo-banheiros').value) : null,
-        area: document.getElementById('campo-area').value.trim(),
-        imagem: document.getElementById('campo-imagem').value.trim() || 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80',
-        publicado: document.getElementById('campo-publicado').value === 'true',
-        latitude: latVal ? Number(latVal) : null,
-        longitude: lngVal ? Number(lngVal) : null,
-        precisaoLocalizacao: document.getElementById('campo-precisao').value
-      };
-
-      if (id) {
-        const idx = DB.imoveis.findIndex(i => String(i.id) === String(id));
-        if (idx >= 0) {
-          DB.imoveis[idx] = { ...DB.imoveis[idx], ...dados };
-        }
-      } else {
-        DB.imoveis.unshift({
-          id: Date.now(),
-          ...dados
-        });
-      }
-
-      salvarDados();
-      renderTabelaImoveis();
-      limparFormularioImovel();
-      document.querySelector('[data-tab="tab-imoveis"]').click();
     });
 
     window.editarImovel = function(id) {
@@ -989,7 +1350,7 @@
       if (!imovel) return;
 
       document.getElementById('imovel-id').value = imovel.id;
-      document.getElementById('form-titulo').textContent = `Editar Imóvel #${imovel.id}`;
+      document.getElementById('form-titulo').textContent = 'Editar Imóvel: ' + imovel.titulo;
       document.getElementById('campo-titulo').value = imovel.titulo || '';
       document.getElementById('campo-finalidade').value = imovel.finalidade || 'ALUGUEL';
       document.getElementById('campo-tipo').value = imovel.tipo || 'CASA';
@@ -1006,6 +1367,11 @@
       document.getElementById('campo-lng').value = imovel.longitude || '';
       document.getElementById('campo-precisao').value = imovel.precisaoLocalizacao || 'aproximada';
 
+      if (imovel.imagem) {
+        document.getElementById('foto-preview-img').src = imovel.imagem;
+        document.getElementById('foto-preview-wrapper').style.display = 'block';
+      }
+
       document.querySelector('[data-tab="tab-novo"]').click();
 
       setTimeout(() => {
@@ -1015,44 +1381,89 @@
       }, 200);
     };
 
-    window.excluirImovel = function(id) {
-      if (confirm('Deseja realmente excluir este anúncio?')) {
-        DB.imoveis = DB.imoveis.filter(i => String(i.id) !== String(id));
-        salvarDados();
-        renderTabelaImoveis();
-      }
-    };
-
     function limparFormularioImovel() {
       document.getElementById('form-imovel').reset();
       document.getElementById('imovel-id').value = '';
       document.getElementById('form-titulo').textContent = 'Cadastrar Novo Imóvel';
+      document.getElementById('foto-preview-wrapper').style.display = 'none';
+      document.getElementById('foto-preview-img').src = '';
+      arquivoFotoSelecionada = null;
+      document.getElementById('nome-foto-selecionada').textContent = '';
       if (adminMarker && adminMap) {
         adminMap.removeLayer(adminMarker);
         adminMarker = null;
       }
     }
+
+    window.abrirNovoImovel = function() {
+      limparFormularioImovel();
+      document.querySelector('[data-tab="tab-novo"]').click();
+    };
+
+    document.getElementById('btn-topo-novo').addEventListener('click', abrirNovoImovel);
     document.getElementById('btn-cancelar-edicao').addEventListener('click', () => {
       limparFormularioImovel();
       document.querySelector('[data-tab="tab-imoveis"]').click();
+    });
+
+    // Mapa Administrativo
+    let adminMap = null;
+    let adminMarker = null;
+
+    function initAdminMap() {
+      if (adminMap) return;
+      const centro = (DB.config && DB.config.mapaCentro) || { lat: -5.4686, lng: -47.8867, zoom: 14 };
+      adminMap = L.map('admin-map').setView([centro.lat, centro.lng], 14);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(adminMap);
+
+      adminMap.on('click', function(e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+        document.getElementById('campo-lat').value = lat;
+        document.getElementById('campo-lng').value = lng;
+        posicionarMarcador(lat, lng);
+      });
+    }
+
+    function posicionarMarcador(lat, lng) {
+      if (!adminMap) return;
+      if (adminMarker) adminMap.removeLayer(adminMarker);
+      adminMarker = L.marker([lat, lng]).addTo(adminMap);
+      adminMap.panTo([lat, lng]);
+    }
+
+    // Navegação por Abas
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const targetId = btn.getAttribute('data-tab');
+        document.getElementById(targetId).classList.add('active');
+
+        if (targetId === 'tab-novo') {
+          setTimeout(() => {
+            initAdminMap();
+            adminMap.invalidateSize();
+          }, 150);
+        }
+      });
     });
 
     // Bairros
     function renderTabelaBairros() {
       const corpo = document.getElementById('tabela-bairros-corpo');
       corpo.innerHTML = '';
-      DB.bairros.forEach(b => {
+      (DB.bairros || []).forEach(b => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${b.nome}</strong></td>
-          <td>${b.regiao.toUpperCase()}</td>
-          <td><span class="badge ${b.ativo !== false ? 'badge-success' : 'badge-danger'}">${b.ativo !== false ? 'Ativo' : 'Inativo'}</span></td>
-          <td>
-            <button type="button" class="btn btn-outline btn-sm" onclick="toggleBairro('${b.id}')">
-              ${b.ativo !== false ? 'Desativar' : 'Ativar'}
-            </button>
-          </td>
-        `;
+        tr.innerHTML = '<td><strong>' + b.nome + '</strong></td>' +
+          '<td>' + (b.regiao || '').toUpperCase() + '</td>' +
+          '<td><span class="badge ' + (b.ativo !== false ? 'badge-success' : 'badge-danger') + '">' + (b.ativo !== false ? 'Ativo' : 'Inativo') + '</span></td>' +
+          '<td><button type="button" class="btn btn-outline btn-sm" onclick="toggleBairro(\'' + b.id + '\')">' + (b.ativo !== false ? 'Desativar' : 'Ativar') + '</button></td>';
         corpo.appendChild(tr);
       });
       atualizarContadores();
@@ -1075,6 +1486,7 @@
       if (!nome) return;
 
       const id = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-');
+      if (!DB.bairros) DB.bairros = [];
       DB.bairros.push({
         id: id,
         nome: nome,
@@ -1086,11 +1498,12 @@
       renderTabelaBairros();
       popularSelectBairros();
       document.getElementById('novo-bairro-nome').value = '';
+      mostrarToast('Bairro adicionado!');
     });
 
     // Configurações
     function carregarConfiguracoes() {
-      const cfg = DB.config;
+      const cfg = DB.config || {};
       document.getElementById('cfg-whatsapp').value = cfg.whatsappNumero || '';
       document.getElementById('cfg-whatsapp-txt').value = cfg.whatsappExibicao || '';
       document.getElementById('cfg-email').value = cfg.email || '';
@@ -1100,29 +1513,26 @@
 
     document.getElementById('form-config').addEventListener('submit', function(e) {
       e.preventDefault();
+      if (!DB.config) DB.config = {};
       DB.config.whatsappNumero = document.getElementById('cfg-whatsapp').value.trim();
       DB.config.whatsappExibicao = document.getElementById('cfg-whatsapp-txt').value.trim();
       DB.config.email = document.getElementById('cfg-email').value.trim();
       DB.config.cidade = document.getElementById('cfg-cidade').value.trim();
       DB.config.regiaoGeografica = document.getElementById('cfg-regiao').value.trim();
       salvarDados();
+      mostrarToast('Configurações salvas!');
     });
 
     // Exportação
     function gerarExportacao() {
       const json = JSON.stringify(DB, null, 2);
-      const jsCode = `/* ==========================================================================
-   CHAVE DO BICO — DADOS CENTRALIZADOS DO SITE
-   Gerado automaticamente pelo Painel Administrativo em ${new Date().toLocaleString('pt-BR')}
-   ========================================================================== */
-window.CHAVE_DO_BICO_DATA = ${json};
-`;
+      const jsCode = '/* ==========================================================================\n' +
+        '   CHAVE DO BICO — DADOS CENTRALIZADOS DO SITE\n' +
+        '   Gerado automaticamente pelo Painel Administrativo em ' + new Date().toLocaleString('pt-BR') + '\n' +
+        '   ========================================================================== */\n' +
+        'window.CHAVE_DO_BICO_DATA = ' + json + ';\n';
       document.getElementById('codigo-exportacao').value = jsCode;
     }
-
-    document.getElementById('btn-exportar-topo').addEventListener('click', () => {
-      document.querySelector('[data-tab="tab-exportar"]').click();
-    });
 
     document.getElementById('btn-copiar-js').addEventListener('click', () => {
       const txt = document.getElementById('codigo-exportacao');
@@ -1144,7 +1554,7 @@ window.CHAVE_DO_BICO_DATA = ${json};
       if (confirm('Atenção: deseja restaurar os dados originais?')) {
         localStorage.removeItem(STORAGE_KEY);
         carregarDados();
-        renderTabelaImoveis();
+        renderizarCatalogo();
         renderTabelaBairros();
         carregarConfiguracoes();
         gerarExportacao();
@@ -1153,18 +1563,32 @@ window.CHAVE_DO_BICO_DATA = ${json};
     });
 
     function atualizarContadores() {
-      document.getElementById('contagem-imoveis').textContent = DB.imoveis.length;
-      document.getElementById('contagem-bairros').textContent = DB.bairros.length;
+      const total = (DB.imoveis || []).length;
+      document.getElementById('contagem-imoveis').textContent = total;
+      document.getElementById('contagem-bairros').textContent = (DB.bairros || []).length;
     }
 
-    // Inicialização
+    // Inicialização da Escuta em Tempo Real do Firestore no Admin
+    function iniciarSincronizacaoNuvemAdmin() {
+      if (window.CDB_FIREBASE) {
+        window.CDB_FIREBASE.ouvirImoveis(function(imoveisNuvem) {
+          if (Array.isArray(imoveisNuvem)) {
+            DB.imoveis = imoveisNuvem;
+            renderizarCatalogo();
+            console.log('[Admin] Imóveis sincronizados com Firestore em tempo real:', imoveisNuvem.length);
+          }
+        });
+      }
+    }
+
+    // Inicialização Geral
     carregarDados();
-    renderTabelaImoveis();
-    iniciarSincronizacaoNuvemAdmin();
+    renderizarCatalogo();
     renderTabelaBairros();
     popularSelectBairros();
     carregarConfiguracoes();
     gerarExportacao();
+    iniciarSincronizacaoNuvemAdmin();
   </script>
 </body>
 </html>
