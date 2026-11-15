@@ -696,9 +696,9 @@
       </div>
     </div>
     <div class="header-actions">
-      <div class="cloud-badge" id="cloud-badge" title="Banco de Dados Firestore e Armazenamento em Nuvem">
-        <span class="pulse-dot"></span>
-        <span>Nuvem em Tempo Real Ativa</span>
+      <div class="cloud-badge" id="github-badge" title="Status da Conexão com o GitHub" onclick="abrirTabGithub()" style="cursor: pointer;">
+        <span class="pulse-dot" id="github-badge-dot"></span>
+        <span id="github-badge-text">🐙 Conectar ao GitHub (Grátis)</span>
       </div>
       <a href="index.html" class="btn btn-outline" style="color: #fff; border-color: rgba(255,255,255,0.4);" target="_blank" rel="noopener">
         🌐 Ver Site Público
@@ -716,6 +716,7 @@
       <button class="tab-btn" data-tab="tab-novo" id="tab-btn-novo">➕ Cadastrar / Editar Imóvel</button>
       <button class="tab-btn" data-tab="tab-bairros">📍 Bairros & Regiões (<span id="contagem-bairros">0</span>)</button>
       <button class="tab-btn" data-tab="tab-config">⚙️ Contatos Oficiais</button>
+      <button class="tab-btn" data-tab="tab-github" id="tab-btn-github">🐙 Conexão GitHub</button>
       <button class="tab-btn" data-tab="tab-exportar">📥 Backup / Exportar</button>
     </nav>
 
@@ -1021,6 +1022,50 @@
       </div>
     </section>
 
+    <!-- TAB: CONEXÃO GITHUB (100% GRATUITO SEM CARTÃO) -->
+    <section id="tab-github" class="tab-panel">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <h2>Conexão com o Repositório GitHub (100% Gratuito)</h2>
+            <p class="sub">Conecte seu painel diretamente ao GitHub para salvar, publicar e remover imóveis online com 1 clique.</p>
+          </div>
+        </div>
+
+        <div style="max-width: 720px; margin-top: 14px;">
+          <div style="background: #F0FDF4; border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 20px; margin-bottom: 22px;">
+            <h4 style="color: #166534; font-size: 16px; margin-bottom: 10px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+              <span>✅</span> Como gerar seu Token de Acesso em 30 segundos (Grátis):
+            </h4>
+            <ol style="margin-left: 20px; line-height: 1.8; font-size: 14px; color: #14532D;">
+              <li>Abra o link oficial do GitHub com os dados já pré-configurados:<br>
+                <a href="https://github.com/settings/tokens/new?scopes=repo&description=Chave+do+Bico+Admin" target="_blank" rel="noopener" style="font-weight: 700; text-decoration: underline; color: #15803D; font-size: 15px;">👉 Clique aqui para Gerar seu Token no GitHub</a>
+              </li>
+              <li>A caixinha <strong>repo</strong> já estará marcada e o nome preenchido.</li>
+              <li>Role a página até o fim e clique no botão verde <strong>"Generate token"</strong>.</li>
+              <li>Copie o código gerado (começa com <code>ghp_...</code>) e cole no campo abaixo!</li>
+            </ol>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="gh-token-input" style="font-weight: 700; color: var(--brand-dark);">Token de Acesso Pessoal (PAT):</label>
+            <div style="display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap;">
+              <input type="password" id="gh-token-input" placeholder="Cole aqui seu token do GitHub (ghp_...)" style="flex: 1; min-width: 280px; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: monospace; font-size: 14px;">
+              <button type="button" class="btn btn-primary" id="btn-salvar-gh-token" onclick="salvarEConectarGithub()">🔗 Salvar e Conectar</button>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin-top: 8px;">
+              🔒 Segurança: Seu token fica salvo exclusivamente no seu próprio navegador e fala direto com a API segura do GitHub.
+            </p>
+          </div>
+
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="btn btn-outline" id="btn-testar-gh" onclick="testarConexaoGithubUI()">🔍 Testar Conexão</button>
+            <button type="button" class="btn btn-danger" onclick="desconectarGithubUI()" style="margin-left: auto;">Desconectar Token</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- TAB 5: BACKUP E EXPORTAÇÃO -->
     <section id="tab-exportar" class="tab-panel">
       <div class="admin-card">
@@ -1045,11 +1090,8 @@
   <!-- Dados Base do Site -->
   <script src="data/site-data.js"></script>
 
-  <!-- Firebase SDKs (Compat) & Sincronização em Tempo Real -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
-  <script src="assets/js/firebase-sync.js"></script>
+  <!-- Integração GitHub Sync (100% Gratuito sem Cartão de Crédito) -->
+  <script src="assets/js/github-sync.js"></script>
 
   <script>
     // Recupera dados do localStorage ou usa o site-data.js inicial
@@ -1276,15 +1318,21 @@
     // Alternar Situação do Imóvel (Alugado / Pausado ou Disponível)
     window.togglePublicadoImovel = async function(id, novoStatus) {
       try {
-        if (window.CDB_FIREBASE) {
-          await window.CDB_FIREBASE.alternarStatusImovel(id, novoStatus);
-          mostrarToast(novoStatus ? '✅ Imóvel REATIVADO no site público!' : '⏸️ Imóvel marcado como ALUGADO (oculto no site público)!');
-        } else {
-          const imovel = DB.imoveis.find(i => String(i.id) === String(id));
-          if (imovel) {
-            imovel.publicado = novoStatus;
-            salvarDados();
-            renderizarCatalogo();
+        const imovel = DB.imoveis.find(i => String(i.id) === String(id));
+        if (imovel) {
+          imovel.publicado = novoStatus;
+          salvarDados();
+          renderizarCatalogo();
+
+          if (window.CDB_GITHUB && window.CDB_GITHUB.estaConectado()) {
+            mostrarToast(novoStatus ? 'Reativando no GitHub...' : 'Marcando como alugado no GitHub...');
+            await window.CDB_GITHUB.salvarNoGitHub(
+              DB,
+              `chore(status): alterar status de "${imovel.titulo}" para ${novoStatus ? 'disponivel' : 'alugado'}`
+            );
+            mostrarToast(novoStatus ? '✅ Imóvel REATIVADO no site público!' : '⏸️ Imóvel marcado como ALUGADO (oculto no site público)!');
+          } else {
+            mostrarToast(novoStatus ? '✅ Imóvel reativado localmente!' : '⏸️ Imóvel marcado como alugado localmente!');
           }
         }
       } catch (err) {
@@ -1292,17 +1340,24 @@
       }
     };
 
-    // Excluir Imóvel definitivamente do Firebase
+    // Excluir Imóvel definitivamente
     window.excluirImovelFirebase = async function(id) {
-      if (confirm('Deseja realmente EXCLUIR este anúncio definitivamente do banco de dados na nuvem?')) {
+      if (confirm('Deseja realmente EXCLUIR este anúncio definitivamente?')) {
         try {
-          if (window.CDB_FIREBASE) {
-            await window.CDB_FIREBASE.excluirImovel(id);
-            mostrarToast('🗑️ Imóvel excluído da nuvem com sucesso!');
+          const itemRemovido = DB.imoveis.find(i => String(i.id) === String(id));
+          DB.imoveis = DB.imoveis.filter(i => String(i.id) !== String(id));
+          salvarDados();
+          renderizarCatalogo();
+
+          if (window.CDB_GITHUB && window.CDB_GITHUB.estaConectado()) {
+            mostrarToast('Excluindo anúncio do GitHub...');
+            await window.CDB_GITHUB.salvarNoGitHub(
+              DB,
+              `chore(imoveis): remover "${itemRemovido ? itemRemovido.titulo : id}"`
+            );
+            mostrarToast('🗑️ Imóvel excluído do GitHub com sucesso!');
           } else {
-            DB.imoveis = DB.imoveis.filter(i => String(i.id) !== String(id));
-            salvarDados();
-            renderizarCatalogo();
+            mostrarToast('🗑️ Imóvel excluído localmente com sucesso!');
           }
         } catch (err) {
           alert('Erro ao excluir imóvel: ' + err.message);
@@ -1322,12 +1377,12 @@
       renderizarCatalogo();
     }
 
-    // Formulário de Imóvel (Salvar / Editar no Firebase com Fallback Seguro)
+    // Formulário de Imóvel (Salvar e Publicar Diretamente no GitHub)
     document.getElementById('form-imovel').addEventListener('submit', async function(e) {
       e.preventDefault();
       const btnSalvar = document.getElementById('btn-salvar-imovel');
       btnSalvar.disabled = true;
-      btnSalvar.textContent = 'Salvando na nuvem...';
+      btnSalvar.textContent = 'Salvando imóvel...';
 
       const id = document.getElementById('imovel-id').value;
       const latVal = document.getElementById('campo-lat').value.trim();
@@ -1358,45 +1413,43 @@
         const progressBar = document.getElementById('upload-progress-bar');
         const progressText = document.getElementById('upload-progress-text');
 
+        // Se houver foto selecionada pelo usuário, converte em Base64 otimizado
         if (arquivoFotoSelecionada) {
           progressBox.style.display = 'block';
+          progressText.textContent = 'Otimizando e preparando fotografia...';
+          progressBar.style.width = '50%';
+          if (window.CDB_GITHUB && window.CDB_GITHUB.fileParaBase64) {
+            const fotoBase64 = await window.CDB_GITHUB.fileParaBase64(arquivoFotoSelecionada);
+            if (fotoBase64) {
+              dados.imagem = fotoBase64;
+            }
+          }
+          progressBar.style.width = '100%';
         }
 
-        let salvoNaCloud = false;
-        if (window.CDB_FIREBASE) {
+        // Salva imediatamente no banco local do navegador
+        salvarImovelNoDBLocal(dados);
+
+        // Se o GitHub estiver conectado, envia o commit diretamente!
+        if (window.CDB_GITHUB && window.CDB_GITHUB.estaConectado()) {
+          btnSalvar.textContent = 'Publicando no GitHub...';
           try {
-            await window.CDB_FIREBASE.salvarImovel(dados, arquivoFotoSelecionada, function(pct) {
-              progressBar.style.width = pct.toFixed(0) + '%';
-              progressText.textContent = 'Enviando foto para a nuvem... ' + pct.toFixed(0) + '%';
-            });
-            salvoNaCloud = true;
-            mostrarToast('✅ Imóvel publicado na nuvem em tempo real!');
-          } catch (errNuvem) {
-            console.warn('[Admin] Nuvem indisponível ou pendente de ativação:', errNuvem);
-            // Garante a imagem em Base64 para não perder a foto selecionada
-            if (arquivoFotoSelecionada && !dados.imagem.startsWith('data:') && !dados.imagem.startsWith('http')) {
-              if (window.CDB_FIREBASE && window.CDB_FIREBASE.fileParaBase64) {
-                dados.imagem = await window.CDB_FIREBASE.fileParaBase64(arquivoFotoSelecionada);
-              }
-            }
-            salvarImovelNoDBLocal(dados);
-            mostrarToast('💾 Salvo no seu navegador! (Cloud pendente de ativação no console)');
-            alert(
-              '⚠️ SEU IMÓVEL FOI SALVO COM SUCESSO!\n\n' +
-              'Os dados e a foto foram guardados com segurança no seu navegador.\n\n' +
-              '📌 Para ativar a sincronização em nuvem em tempo real no projeto "chave-do-bico":\n' +
-              '1. Acesse: https://console.firebase.google.com/project/chave-do-bico/firestore\n' +
-              '2. Clique no botão "Criar banco de dados" (escolha Iniciar no Modo de Teste)\n' +
-              '3. Acesse "Storage" no menu e clique em "Primeiros passos"\n\n' +
-              'Após isso, todo imóvel sincronizará automaticamente na nuvem sem travar!'
-            );
+            await window.CDB_GITHUB.salvarNoGitHub(DB, `feat(imovel): salvar "${dados.titulo}"`);
+            mostrarToast('✅ Imóvel publicado com sucesso no GitHub!');
+          } catch (errGh) {
+            console.error('[Admin] Erro ao sincronizar com GitHub:', errGh);
+            mostrarToast('💾 Salvo no navegador! Erro no GitHub.');
+            alert('⚠️ O imóvel foi salvo com sucesso no seu navegador, mas houve um erro ao enviar para o GitHub:\n\n' + errGh.message + '\n\nVerifique se o seu Token na aba "Conexão GitHub" está correto.');
           }
         } else {
-          if (arquivoFotoSelecionada && window.CDB_FIREBASE && window.CDB_FIREBASE.fileParaBase64) {
-            dados.imagem = await window.CDB_FIREBASE.fileParaBase64(arquivoFotoSelecionada);
+          mostrarToast('💾 Salvo com sucesso no seu navegador!');
+          const querConectar = confirm(
+            '✅ Imóvel salvo com sucesso no navegador!\n\n' +
+            'Deseja conectar seu Token do GitHub agora para publicar este imóvel online para todo mundo ver no site oficial?'
+          );
+          if (querConectar) {
+            abrirTabGithub();
           }
-          salvarImovelNoDBLocal(dados);
-          mostrarToast('💾 Salvo localmente!');
         }
 
         limparFormularioImovel();
@@ -1638,33 +1691,112 @@
       document.getElementById('contagem-bairros').textContent = (DB.bairros || []).length;
     }
 
-    // Inicialização da Escuta em Tempo Real do Firestore no Admin
-    function iniciarSincronizacaoNuvemAdmin() {
-      window.addEventListener('cdb:firebase-error', function (e) {
-        const cloudBadge = document.getElementById('cloud-badge');
-        if (cloudBadge) {
-          cloudBadge.style.backgroundColor = 'rgba(245, 158, 11, 0.2)';
-          cloudBadge.style.borderColor = 'rgba(245, 158, 11, 0.6)';
-          cloudBadge.innerHTML = `
-            <span style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; display: inline-block;"></span>
-            <span style="color: #FEF3C7; font-size: 12px; font-weight: 600;">⚠️ Nuvem Pendente de Ativação (Salvo Local)</span>
-          `;
-          cloudBadge.title = 'Clique para abrir o console e ativar o Cloud Firestore no projeto chave-do-bico';
-          cloudBadge.style.cursor = 'pointer';
-          cloudBadge.onclick = () => {
-            window.open('https://console.firebase.google.com/project/chave-do-bico/firestore', '_blank');
-          };
-        }
-      });
+    // ==========================================================================
+    // INTEGRAÇÃO GITHUB SYNC (100% GRATUITO SEM CARTÃO)
+    // ==========================================================================
+    function abrirTabGithub() {
+      const tabBtn = document.getElementById('tab-btn-github');
+      if (tabBtn) tabBtn.click();
+    }
 
-      if (window.CDB_FIREBASE) {
-        window.CDB_FIREBASE.ouvirImoveis(function(imoveisNuvem) {
-          if (Array.isArray(imoveisNuvem)) {
-            DB.imoveis = imoveisNuvem;
-            renderizarCatalogo();
-            console.log('[Admin] Imóveis sincronizados com Firestore em tempo real:', imoveisNuvem.length);
-          }
-        });
+    function atualizarStatusBadgeGithub() {
+      const badge = document.getElementById('github-badge');
+      const dot = document.getElementById('github-badge-dot');
+      const text = document.getElementById('github-badge-text');
+      const tokenInput = document.getElementById('gh-token-input');
+      const token = (window.CDB_GITHUB && typeof window.CDB_GITHUB.obterToken === 'function')
+        ? window.CDB_GITHUB.obterToken()
+        : '';
+
+      if (tokenInput && token) {
+        tokenInput.value = token;
+      }
+
+      if (token) {
+        if (badge) {
+          badge.style.backgroundColor = 'rgba(66, 217, 0, 0.15)';
+          badge.style.borderColor = 'rgba(66, 217, 0, 0.6)';
+        }
+        if (dot) {
+          dot.style.background = '#42D900';
+          dot.style.boxShadow = '0 0 8px #42D900';
+        }
+        if (text) {
+          text.textContent = '🐙 GitHub Conectado';
+        }
+      } else {
+        if (badge) {
+          badge.style.backgroundColor = 'rgba(245, 158, 11, 0.2)';
+          badge.style.borderColor = 'rgba(245, 158, 11, 0.6)';
+        }
+        if (dot) {
+          dot.style.background = '#F59E0B';
+          dot.style.boxShadow = '0 0 8px #F59E0B';
+        }
+        if (text) {
+          text.textContent = '🐙 Conectar ao GitHub (Grátis)';
+        }
+      }
+    }
+
+    async function salvarEConectarGithub() {
+      const input = document.getElementById('gh-token-input');
+      const token = (input ? input.value : '').trim();
+      if (!token) {
+        alert('Por favor, cole seu token do GitHub antes de salvar.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-salvar-gh-token');
+      const originalText = btn ? btn.textContent : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Conectando...';
+      }
+
+      try {
+        await window.CDB_GITHUB.testarConexao(token);
+        window.CDB_GITHUB.salvarToken(token);
+        atualizarStatusBadgeGithub();
+        mostrarToast('✅ Conectado ao GitHub com sucesso! Suas alterações serão salvas na nuvem gratuitamente.');
+      } catch (err) {
+        alert('Erro ao conectar ao GitHub: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      }
+    }
+
+    async function testarConexaoGithubUI() {
+      const btn = document.getElementById('btn-testar-gh');
+      const originalText = btn ? btn.textContent : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Testando...';
+      }
+
+      try {
+        const res = await window.CDB_GITHUB.testarConexao();
+        mostrarToast(`✅ Conexão ativa com ${res.repo}! Token funcionando perfeitamente.`);
+      } catch (err) {
+        alert('Falha no teste: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      }
+    }
+
+    function desconectarGithubUI() {
+      if (confirm('Deseja desconectar seu token do GitHub deste navegador?')) {
+        window.CDB_GITHUB.salvarToken('');
+        const input = document.getElementById('gh-token-input');
+        if (input) input.value = '';
+        atualizarStatusBadgeGithub();
+        mostrarToast('Token do GitHub desconectado.');
       }
     }
 
@@ -1675,7 +1807,7 @@
     popularSelectBairros();
     carregarConfiguracoes();
     gerarExportacao();
-    iniciarSincronizacaoNuvemAdmin();
+    atualizarStatusBadgeGithub();
   </script>
 </body>
 </html>

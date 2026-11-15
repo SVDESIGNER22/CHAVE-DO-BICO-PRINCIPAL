@@ -3059,17 +3059,33 @@
   <script src="assets/js/localizacao.js"></script>
   <script src="assets/js/efeitos-interativos.js"></script>
 
-  <!-- Firebase SDKs (Compat) & Sincronização em Tempo Real -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
-  <script src="assets/js/firebase-sync.js"></script>
+  <!-- Sincronização Direta com GitHub (100% Gratuito sem Cartão de Crédito) -->
+  <script src="assets/js/github-sync.js"></script>
 
   <script>
     // ==========================================================================
     // BASE DE DADOS DINÂMICA DE IMÓVEIS (EXTENSÍVEL VIA window.cadastrarImovel)
+    // Carrega dados locais ou do site-data.js prioritariamente
     // ==========================================================================
-    const IMOVEIS_DATABASE = [
+    function obterImoveisIniciais() {
+      try {
+        const local = localStorage.getItem('CHAVE_DO_BICO_DATA_V1');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (parsed && Array.isArray(parsed.imoveis) && parsed.imoveis.length > 0) {
+            return parsed.imoveis;
+          }
+        }
+      } catch (e) {}
+
+      if (window.CHAVE_DO_BICO_DATA && Array.isArray(window.CHAVE_DO_BICO_DATA.imoveis) && window.CHAVE_DO_BICO_DATA.imoveis.length > 0) {
+        return window.CHAVE_DO_BICO_DATA.imoveis;
+      }
+      return null;
+    }
+
+    const _dadosCarregados = obterImoveisIniciais();
+    const IMOVEIS_DATABASE = _dadosCarregados || [
       {
         id: 1,
         titulo: "Casa Ampla 3 Quartos com Quintal",
@@ -3628,30 +3644,44 @@
     // INICIALIZAÇÃO DE EVENTOS & PARALLAX DO VÍDEO
     // ==========================================================================
     document.addEventListener('DOMContentLoaded', function() {
-      // Sincronização em Tempo Real com o Firebase Firestore
-      if (window.CDB_FIREBASE) {
-        // Popula os imóveis iniciais no Firestore caso o banco esteja vazio
-        window.CDB_FIREBASE.sincronizarImoveisIniciaisSeVazio(IMOVEIS_DATABASE);
+      // 1. Sincronização em tempo real entre abas (Admin -> Site)
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'CHAVE_DO_BICO_DATA_V1' && e.newValue) {
+          try {
+            const data = JSON.parse(e.newValue);
+            if (data && Array.isArray(data.imoveis)) {
+              IMOVEIS_DATABASE.length = 0;
+              data.imoveis.forEach(i => IMOVEIS_DATABASE.push(i));
+              currentSlide = 0;
+              renderizarCarrossel();
+              renderizarHeroCard(0, false);
+              window.dispatchEvent(new CustomEvent('cdb:imoveis-atualizados'));
+              if (window.CDB && typeof window.CDB.aplicar === 'function') {
+                window.CDB.aplicar();
+              }
+              console.log('⚡ [Chave do Bico] Imóveis atualizados via alteração local do Admin:', IMOVEIS_DATABASE.length);
+            }
+          } catch (err) {}
+        }
+      });
 
-        // Ouve atualizações em tempo real (novos cadastros, alugados/removidos)
-        window.CDB_FIREBASE.ouvirImoveis(function(imoveisNuvem) {
-          if (Array.isArray(imoveisNuvem) && imoveisNuvem.length > 0) {
-            // Filtra somente os publicados (imóveis alugados/pausados são automaticamente ocultados)
-            const ativos = imoveisNuvem.filter(i => i.publicado !== false);
+      // 2. Sincronização com o Repositório GitHub (GitHub API / Raw Cache-Buster)
+      if (window.CDB_GITHUB && typeof window.CDB_GITHUB.carregarDadosMaisRecentes === 'function') {
+        window.CDB_GITHUB.carregarDadosMaisRecentes().then(dadosMaisRecentes => {
+          if (dadosMaisRecentes && Array.isArray(dadosMaisRecentes.imoveis) && dadosMaisRecentes.imoveis.length > 0) {
             IMOVEIS_DATABASE.length = 0;
-            ativos.forEach(i => IMOVEIS_DATABASE.push(i));
-
+            dadosMaisRecentes.imoveis.forEach(i => IMOVEIS_DATABASE.push(i));
             currentSlide = 0;
             renderizarCarrossel();
-            renderizarHeroCard(heroCurrentIndex, false);
-
-            // Notifica o mapa interativo e os filtros de bairros
+            renderizarHeroCard(0, false);
             window.dispatchEvent(new CustomEvent('cdb:imoveis-atualizados'));
             if (window.CDB && typeof window.CDB.aplicar === 'function') {
               window.CDB.aplicar();
             }
-            console.log('⚡ [Chave do Bico] Imóveis sincronizados em tempo real com a nuvem:', ativos.length);
+            console.log('⚡ [Chave do Bico] Imóveis atualizados diretamente do GitHub:', IMOVEIS_DATABASE.length);
           }
+        }).catch(err => {
+          console.warn('[CDB] Aviso sincronização GitHub:', err);
         });
       }
 
