@@ -512,11 +512,116 @@
       box-shadow: var(--shadow-hero-card);
       border: 1px solid rgba(255, 255, 255, 0.2);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
     }
 
     .hero-property-card:hover {
       transform: translateY(-4px);
       box-shadow: 0 30px 60px rgba(0, 30, 10, 0.42);
+    }
+
+    /* Barra Superior do Card com Indicadores Dinâmicos */
+    .hero-card-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 16px;
+      background: linear-gradient(180deg, #F9FAF9 0%, #EEF4EF 100%);
+      border-bottom: 1px solid #DCE6DE;
+      font-size: 11.5px;
+    }
+
+    .hero-card-counter {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-weight: 700;
+      color: var(--brand-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .hero-live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--brand-accent);
+      box-shadow: 0 0 8px rgba(66, 217, 0, 0.9);
+      animation: pulseAnim 2s infinite;
+    }
+
+    .hero-card-controls {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .hero-card-nav-dots {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-right: 6px;
+    }
+
+    .hero-dot-btn {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #CAD7CC;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .hero-dot-btn.is-active {
+      width: 16px;
+      border-radius: 4px;
+      background-color: var(--brand-primary);
+    }
+
+    .hero-arrow-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: var(--white);
+      border: 1px solid #CFDCD1;
+      color: var(--brand-dark);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+    }
+
+    .hero-arrow-btn:hover {
+      background-color: var(--brand-primary);
+      border-color: var(--brand-primary);
+      color: var(--white);
+    }
+
+    .hero-arrow-btn svg {
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Transição Suave na Troca do Imóvel */
+    .hero-card-inner {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+      will-change: opacity, transform;
+    }
+
+    .hero-card-inner.is-fading {
+      opacity: 0;
+      transform: translateY(6px);
     }
 
     .card-media {
@@ -553,6 +658,19 @@
     .badge-venda {
       background-color: var(--brand-accent);
       color: var(--brand-dark);
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .badge-aluguel {
+      background-color: var(--brand-dark);
+      color: var(--white);
       font-family: var(--font-body);
       font-size: 11px;
       font-weight: 700;
@@ -2027,62 +2145,84 @@
             </ul>
           </div>
 
-          <!-- Coluna Direita: Protagonismo Visual (Exemplo de Imóvel com Fotos Reais) -->
-          <div class="hero-visual" aria-hidden="true">
-            <article class="hero-property-card">
-              <!-- Mídia do Imóvel (Aspect Ratio 16:10) -->
-              <div class="card-media">
-                <div class="card-floating-badges">
-                  <span class="badge-venda">VENDA</span>
-                  <span class="badge-tipo">LOTE / TERRENO</span>
+          <!-- Coluna Direita: Protagonismo Visual (Alternador Dinâmico de Imóveis Cadastrados) -->
+          <div class="hero-visual" id="hero-visual-container">
+            <article class="hero-property-card" id="hero-property-card" aria-label="Vitrine de Imóveis em Destaque">
+              
+              <!-- Barra Superior de Controle & Indicador Dinâmico de Imóvel -->
+              <div class="hero-card-topbar">
+                <div class="hero-card-counter">
+                  <span class="hero-live-dot" aria-hidden="true"></span>
+                  <span id="hero-card-counter-text">Imóvel Disponível</span>
                 </div>
-                <img 
-                  src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=80" 
-                  alt="Lote residencial de alto padrão no Setor Boa Vista" 
-                  loading="eager"
-                  width="450"
-                  height="281">
-                <span class="badge-direto">
-                  ⚡ Direto com o proprietário
-                </span>
+                <div class="hero-card-controls">
+                  <div class="hero-card-nav-dots" id="hero-card-dots"></div>
+                  <button type="button" class="hero-arrow-btn" id="hero-card-prev" aria-label="Imóvel anterior" title="Ver imóvel anterior">
+                    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                  </button>
+                  <button type="button" class="hero-arrow-btn" id="hero-card-next" aria-label="Próximo imóvel" title="Ver próximo imóvel">
+                    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
               </div>
 
-              <!-- Informações do Card -->
-              <div class="card-content">
-                <div class="card-location">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  </svg>
-                  <span>Setor Boa Vista, Augustinópolis - TO</span>
-                </div>
-                <h3 class="card-title">Lote Residencial Pronto para Construir</h3>
-                
-                <div class="card-features">
-                  <div class="feature-item">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M3 5v14h18V5H3zm16 6h-2V7h2v4zm-4-4v4h-4V7h4zm-6 0v4H5V7h4zm-4 6h4v4H5v-4zm6 4v-4h4v4h-4zm6 0v-4h2v4h-2z"/>
-                    </svg>
-                    <span>360 m² (12x30)</span>
+              <!-- Container com transição suave -->
+              <div class="hero-card-inner" id="hero-card-inner">
+                <!-- Mídia do Imóvel (Aspect Ratio 16:10) -->
+                <div class="card-media">
+                  <div class="card-floating-badges" id="hero-card-badges">
+                    <span class="badge-aluguel">ALUGUEL</span>
+                    <span class="badge-tipo">CASA</span>
                   </div>
-                  <div class="feature-item">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                    </svg>
-                    <span>Escriturado</span>
-                  </div>
+                  <img 
+                    id="hero-card-img"
+                    src="https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=900&q=80" 
+                    alt="Casa Ampla 3 Quartos com Quintal" 
+                    loading="eager"
+                    width="450"
+                    height="281">
+                  <span class="badge-direto">
+                    ⚡ Direto com o proprietário
+                  </span>
                 </div>
 
-                <div class="card-footer">
-                  <div class="card-price-box">
-                    <span class="card-price-label">Valor de Oportunidade</span>
-                    <span class="card-price-val">R$ 68.000</span>
-                  </div>
-                  <a href="https://wa.me/5563999630980" data-cdb-wa="imovel" target="_blank" rel="noopener" class="btn-whatsapp-card">
+                <!-- Informações do Card -->
+                <div class="card-content">
+                  <div class="card-location" id="hero-card-location">
                     <svg viewBox="0 0 24 24">
-                      <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.92-9.91-9.92zM12.04 20.09c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31c-.82-1.31-1.26-2.83-1.26-4.39 0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.25-8.24 8.25zm4.52-6.18c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.23.9 2.43 1.03 2.6.12.17 1.78 2.71 4.3 3.8 2.53 1.08 2.53.72 2.98.68.46-.05 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.3z"/>
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
-                    <span>Falar no WhatsApp</span>
-                  </a>
+                    <span>Centro, Augustinópolis - TO</span>
+                  </div>
+                  <h3 class="card-title" id="hero-card-title">Casa Ampla 3 Quartos com Quintal</h3>
+                  
+                  <div class="card-features" id="hero-card-features">
+                    <div class="feature-item">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M3 5v14h18V5H3zm16 6h-2V7h2v4zm-4-4v4h-4V7h4zm-6 0v4H5V7h4zm-4 6h4v4H5v-4zm6 4v-4h4v4h-4zm6 0v-4h2v4h-2z"/>
+                      </svg>
+                      <span>3 Quartos</span>
+                    </div>
+                    <div class="feature-item">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                      </svg>
+                      <span>140 m²</span>
+                    </div>
+                  </div>
+
+                  <div class="card-footer">
+                    <div class="card-price-box">
+                      <span class="card-price-label" id="hero-card-price-label">Valor do Aluguel</span>
+                      <span class="card-price-val" id="hero-card-price-val">R$ 1.200/mês</span>
+                    </div>
+                    <a href="https://wa.me/5563999630980" id="hero-card-whatsapp" data-cdb-wa="imovel" target="_blank" rel="noopener" class="btn-whatsapp-card">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.92-9.91-9.92zM12.04 20.09c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31c-.82-1.31-1.26-2.83-1.26-4.39 0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.25-8.24 8.25zm4.52-6.18c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.23.9 2.43 1.03 2.6.12.17 1.78 2.71 4.3 3.8 2.53 1.08 2.53.72 2.98.68.46-.05 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.3z"/>
+                      </svg>
+                      <span>Falar no WhatsApp</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             </article>
@@ -3257,9 +3397,232 @@
       IMOVEIS_DATABASE.unshift(imovelFormatado);
       currentSlide = 0;
       renderizarCarrossel();
+      renderizarHeroCard(0, true);
       console.log(`✅ Imóvel "${imovelFormatado.titulo}" cadastrado com sucesso! Total no carrossel: ${IMOVEIS_DATABASE.length}`);
       return true;
     };
+
+    // ==========================================================================
+    // ROTACIONADOR DINÂMICO DE IMÓVEIS DO HERO (VITRINE PRINCIPAL)
+    // ==========================================================================
+    let heroCurrentIndex = 0;
+    let heroTimer = null;
+    let heroIsPaused = false;
+
+    function obterImoveisParaHero() {
+      const lista = (Array.isArray(IMOVEIS_DATABASE) && IMOVEIS_DATABASE.length > 0)
+        ? IMOVEIS_DATABASE
+        : [];
+      // Filtra apenas disponíveis (publicados e não alugados)
+      const disponiveis = lista.filter(im => {
+        if (im.publicado === false) return false;
+        const st = String(im.status || '').toLowerCase().trim();
+        return st !== 'alugado';
+      });
+      return disponiveis.length > 0 ? disponiveis : lista;
+    }
+
+    function renderizarHeroCard(index, animar = true) {
+      const lista = obterImoveisParaHero();
+      if (!lista || lista.length === 0) return;
+
+      if (index < 0) index = lista.length - 1;
+      if (index >= lista.length) index = 0;
+      heroCurrentIndex = index;
+
+      const imovel = lista[index];
+      const cardInner = document.getElementById('hero-card-inner');
+      const counterText = document.getElementById('hero-card-counter-text');
+      const dotsContainer = document.getElementById('hero-card-dots');
+
+      if (!cardInner) return;
+
+      const atualizarDOM = () => {
+        // 1. Contador e Indicadores
+        if (counterText) {
+          counterText.textContent = `Imóvel ${index + 1} de ${lista.length}`;
+        }
+        if (dotsContainer) {
+          dotsContainer.innerHTML = lista.map((_, i) => `
+            <button type="button" class="hero-dot-btn ${i === index ? 'is-active' : ''}" 
+                    aria-label="Ver imóvel ${i + 1}" data-hero-dot="${i}"></button>
+          `).join('');
+        }
+
+        // 2. Mídia / Imagem Real
+        const imgEl = document.getElementById('hero-card-img');
+        const foto = (imovel.fotos && imovel.fotos.length > 0)
+          ? imovel.fotos[0]
+          : (imovel.imagem || 'logo.jpg');
+        if (imgEl) {
+          imgEl.src = foto;
+          imgEl.alt = imovel.titulo || 'Imóvel em destaque';
+        }
+
+        // 3. Badges de Finalidade e Tipo
+        const badgesEl = document.getElementById('hero-card-badges');
+        if (badgesEl) {
+          const finalidadeNorm = String(imovel.finalidade || 'ALUGUEL').toUpperCase().trim();
+          const badgeClass = finalidadeNorm === 'VENDA' ? 'badge-venda' : 'badge-aluguel';
+          const tipoNorm = String(imovel.tipo || 'CASA').toUpperCase().trim();
+          badgesEl.innerHTML = `
+            <span class="${badgeClass}">${finalidadeNorm}</span>
+            <span class="badge-tipo">${tipoNorm}</span>
+          `;
+        }
+
+        // 4. Localização (Bairro e Cidade)
+        const locEl = document.getElementById('hero-card-location');
+        if (locEl) {
+          const bairro = imovel.bairro || 'Centro';
+          locEl.innerHTML = `
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+            <span>${bairro}, Augustinópolis - TO</span>
+          `;
+        }
+
+        // 5. Título Real
+        const titleEl = document.getElementById('hero-card-title');
+        if (titleEl) {
+          titleEl.textContent = imovel.titulo || 'Imóvel Disponível em Augustinópolis';
+        }
+
+        // 6. Características (Quartos, Banheiros, Metragem)
+        const featEl = document.getElementById('hero-card-features');
+        if (featEl) {
+          let featsHtml = '';
+          if (imovel.quartos) {
+            featsHtml += `
+              <div class="feature-item">
+                <svg viewBox="0 0 24 24"><path d="M19 7h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4zm1 8h-7V9h6c1.1 0 2 .9 2 2v4z"/></svg>
+                <span>${imovel.quartos} ${imovel.quartos > 1 ? 'Quartos' : 'Quarto'}</span>
+              </div>
+            `;
+          }
+          if (imovel.banheiros) {
+            featsHtml += `
+              <div class="feature-item">
+                <svg viewBox="0 0 24 24"><path d="M20 13V4.83C20 3.27 18.73 2 17.17 2c-.75 0-1.47.3-2 .83l-1.25 1.25c-.16-.05-.33-.08-.51-.08-.78 0-1.46.47-1.78 1.15L9.22 8.35C8.92 8.13 8.55 8 8.15 8 7.02 8 6.09 8.92 6.09 10.05v2.95H4v2h16v-2h-2zm-8.85-6.55l1.6-1.6c.2-.2.51-.2.71 0s.2.51 0 .71l-1.6 1.6c-.2.2-.51.2-.71 0s-.2-.51 0-.71zM4 17h16v4H4v-4z"/></svg>
+                <span>${imovel.banheiros} ${imovel.banheiros > 1 ? 'Banh.' : 'Banh.'}</span>
+              </div>
+            `;
+          }
+          if (imovel.area) {
+            featsHtml += `
+              <div class="feature-item">
+                <svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 6h-2V7h2v4zm-4-4v4h-4V7h4zm-6 0v4H5V7h4zm-4 6h4v4H5v-4zm6 4v-4h4v4h-4zm6 0v-4h2v4h-2z"/></svg>
+                <span>${imovel.area}</span>
+              </div>
+            `;
+          } else if (!imovel.quartos && !imovel.banheiros) {
+            featsHtml += `
+              <div class="feature-item">
+                <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                <span>Escriturado</span>
+              </div>
+              <div class="feature-item">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                <span>Pronto para Negociar</span>
+              </div>
+            `;
+          }
+          featEl.innerHTML = featsHtml;
+        }
+
+        // 7. Preço e Rótulo
+        const priceLabelEl = document.getElementById('hero-card-price-label');
+        const priceValEl = document.getElementById('hero-card-price-val');
+        if (priceLabelEl) {
+          const finalidadeNorm = String(imovel.finalidade || '').toUpperCase().trim();
+          priceLabelEl.textContent = finalidadeNorm === 'ALUGUEL'
+            ? 'Valor do Aluguel'
+            : 'Valor de Oportunidade';
+        }
+        if (priceValEl) {
+          priceValEl.textContent = imovel.preco || 'Sob Consulta';
+        }
+
+        // 8. Botão WhatsApp Direto para esse imóvel
+        const waBtn = document.getElementById('hero-card-whatsapp');
+        if (waBtn) {
+          const tel = imovel.whatsapp || '5563999630980';
+          const tituloLimpo = imovel.titulo || 'imóvel em destaque';
+          const msg = encodeURIComponent(`Olá! Vi o imóvel "${tituloLimpo}" no site CHAVE DO BICO e gostaria de mais informações.`);
+          waBtn.href = `https://wa.me/${tel}?text=${msg}`;
+        }
+      };
+
+      if (animar) {
+        cardInner.classList.add('is-fading');
+        setTimeout(() => {
+          atualizarDOM();
+          cardInner.classList.remove('is-fading');
+        }, 220);
+      } else {
+        atualizarDOM();
+      }
+    }
+
+    function iniciarHeroRotator() {
+      if (heroTimer) clearInterval(heroTimer);
+      heroTimer = setInterval(() => {
+        if (!heroIsPaused) {
+          renderizarHeroCard(heroCurrentIndex + 1, true);
+        }
+      }, 5500);
+    }
+
+    function configurarEventosHeroCard() {
+      const card = document.getElementById('hero-property-card');
+      const prevBtn = document.getElementById('hero-card-prev');
+      const nextBtn = document.getElementById('hero-card-next');
+      const dotsContainer = document.getElementById('hero-card-dots');
+
+      if (prevBtn) {
+        prevBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          renderizarHeroCard(heroCurrentIndex - 1, true);
+          iniciarHeroRotator();
+        });
+      }
+
+      if (nextBtn) {
+        nextBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          renderizarHeroCard(heroCurrentIndex + 1, true);
+          iniciarHeroRotator();
+        });
+      }
+
+      if (dotsContainer) {
+        dotsContainer.addEventListener('click', (e) => {
+          const btn = e.target.closest('[data-hero-dot]');
+          if (btn) {
+            const idx = parseInt(btn.getAttribute('data-hero-dot'), 10);
+            if (!isNaN(idx)) {
+              renderizarHeroCard(idx, true);
+              iniciarHeroRotator();
+            }
+          }
+        });
+      }
+
+      if (card) {
+        card.addEventListener('mouseenter', () => { heroIsPaused = true; });
+        card.addEventListener('mouseleave', () => { heroIsPaused = false; });
+        card.addEventListener('touchstart', () => { heroIsPaused = true; }, { passive: true });
+        card.addEventListener('touchend', () => {
+          setTimeout(() => { heroIsPaused = false; }, 3000);
+        }, { passive: true });
+      }
+
+      // Ao receber atualização de imóveis (do Firebase ou filtros), atualiza o card
+      window.addEventListener('cdb:imoveis-atualizados', () => {
+        renderizarHeroCard(heroCurrentIndex, false);
+      });
+    }
 
     // ==========================================================================
     // INICIALIZAÇÃO DE EVENTOS & PARALLAX DO VÍDEO
@@ -3280,6 +3643,7 @@
 
             currentSlide = 0;
             renderizarCarrossel();
+            renderizarHeroCard(heroCurrentIndex, false);
 
             // Notifica o mapa interativo e os filtros de bairros
             window.dispatchEvent(new CustomEvent('cdb:imoveis-atualizados'));
@@ -3293,6 +3657,11 @@
 
       renderizarCarrossel();
       iniciarAutoPlay();
+
+      // Inicializa o Card de Destaque Rotativo do Hero
+      renderizarHeroCard(0, false);
+      configurarEventosHeroCard();
+      iniciarHeroRotator();
 
       // ==========================================================================
       // ANIMAÇÃO SUAVE NO SCROLL: CARDS DE BENEFÍCIOS (INTERSECTION OBSERVER)
