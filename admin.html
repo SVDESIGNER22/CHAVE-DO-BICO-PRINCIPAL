@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Administrativo | CHAVE DO BICO</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/jpeg" href="logo.jpg">
+
+  <!-- Google Fonts: Manrope & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS para o mapa de marcação de coordenadas -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+
+  <style>
+    :root {
+      --brand-dark: #004719;
+      --brand-primary: #087B18;
+      --brand-accent: #42D900;
+      --brand-accent-light: #C9FF24;
+      --white: #FFFFFF;
+      --surface-muted: #F7FAF7;
+      --text-primary: #17231A;
+      --text-secondary: #66736A;
+      --border: #E5EBE6;
+      --feedback-success: #087B18;
+      --feedback-danger: #B42318;
+      --feedback-warning: #A15C00;
+
+      --font-heading: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+      --radius-card: 16px;
+      --radius-btn: 10px;
+      --radius-input: 8px;
+      --radius-pill: 9999px;
+      --shadow-sm: 0 4px 16px rgba(0, 71, 25, 0.06);
+      --shadow-hover: 0 12px 28px rgba(0, 71, 25, 0.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background-color: #F0F4F1;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    /* Topbar */
+    .admin-header {
+      background-color: var(--brand-dark);
+      color: var(--white);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--brand-accent);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-group img {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1.5px solid var(--brand-accent);
+    }
+    .brand-group h1 {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+    .brand-group span {
+      font-size: 12px;
+      color: var(--brand-accent-light);
+    }
+    .header-links {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* Layout */
+    .admin-container {
+      max-width: 1200px;
+      margin: 28px auto;
+      padding: 0 20px;
+    }
+
+    /* Tabs */
+    .admin-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid #D6E3D8;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      font-family: var(--font-heading);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      padding: 12px 20px;
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--brand-primary); background-color: rgba(8, 123, 24, 0.05); }
+    .tab-btn.active {
+      color: var(--brand-dark);
+      background-color: var(--white);
+      border-bottom: 3px solid var(--brand-primary);
+    }
+
+    /* Panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .card {
+      background-color: var(--white);
+      border-radius: var(--radius-card);
+      border: 1px solid var(--border);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+    .card h2 {
+      font-family: var(--font-heading);
+      font-size: 20px;
+      color: var(--brand-dark);
+      margin-bottom: 8px;
+    }
+    .card p.sub {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: var(--radius-btn);
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-primary { background-color: var(--brand-primary); color: var(--white); }
+    .btn-primary:hover { background-color: #066313; }
+    .btn-accent { background-color: var(--brand-accent); color: var(--brand-dark); font-weight: 700; }
+    .btn-accent:hover { background-color: #3bcf00; }
+    .btn-danger { background-color: #FEE4E2; color: var(--feedback-danger); border-color: #FECDCA; }
+    .btn-danger:hover { background-color: var(--feedback-danger); color: var(--white); }
+    .btn-outline { background: transparent; border-color: var(--border); color: var(--text-primary); }
+    .btn-outline:hover { border-color: var(--brand-primary); color: var(--brand-primary); }
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+    /* Forms */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group.col-span-2 { grid-column: span 2; }
+    .form-group.col-span-3 { grid-column: span 3; }
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    input, select, textarea {
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-input);
+      background-color: var(--surface-muted);
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      background-color: var(--white);
+    }
+    .help-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Map in Admin */
+    #admin-map {
+      width: 100%;
+      height: 320px;
+      border-radius: var(--radius-input);
+      border: 1.5px solid var(--border);
+      margin-top: 8px;
+    }
+
+    /* Table */
+    .table-responsive {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background-color: var(--surface-muted);
+      color: var(--brand-dark);
+      font-family: var(--font-heading);
+      font-weight: 700;
+      padding: 12px 14px;
+      border-bottom: 2px solid var(--border);
+    }
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:hover td { background-color: #FAFDFB; }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-success { background-color: #E8F5E9; color: var(--brand-primary); }
+    .badge-warning { background-color: #FEF0C7; color: var(--feedback-warning); }
+    .badge-danger { background-color: #FEE4E2; color: var(--feedback-danger); }
+    .badge-info { background-color: #E0F2FE; color: #0284C7; }
+
+    /* Code export box */
+    .code-box {
+      width: 100%;
+      height: 280px;
+      font-family: 'Consolas', monospace;
+      font-size: 12.5px;
+      padding: 14px;
+      background-color: #1A241C;
+      color: #A3E635;
+      border-radius: var(--radius-input);
+      border: 1px solid var(--border);
+      resize: vertical;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background-color: var(--brand-dark);
+      color: var(--white);
+      padding: 14px 22px;
+      border-radius: 10px;
+      border-left: 5px solid var(--brand-accent);
+      box-shadow: var(--shadow-hover);
+      display: none;
+      z-index: 2000;
+      font-weight: 600;
+    }
+
+    @media (max-width: 900px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.col-span-2, .form-group.col-span-3 { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="admin-header">
+    <div class="brand-group">
+      <img src="logo.jpg" alt="Logo">
+      <div>
+        <h1>CHAVE DO BICO</h1>
+        <span>Painel Administrativo de Imóveis & Localização</span>
+      </div>
+    </div>
+    <div class="header-links">
+      <a href="index.html" class="btn btn-outline" style="color: #fff; border-color: rgba(255,255,255,0.4);">
+        ← Ver Site
+      </a>
+      <button type="button" class="btn btn-accent" id="btn-exportar-topo">
+        💾 Exportar Dados
+      </button>
+    </div>
+  </header>
+
+  <main class="admin-container">
+    <!-- Abas -->
+    <nav class="admin-tabs" role="tablist">
+      <button class="tab-btn active" data-tab="tab-imoveis">🏡 Imóveis Cadastrados (<span id="contagem-imoveis">0</span>)</button>
+      <button class="tab-btn" data-tab="tab-novo">➕ Novo / Editar Imóvel</button>
+      <button class="tab-btn" data-tab="tab-bairros">📍 Bairros & Regiões (<span id="contagem-bairros">0</span>)</button>
+      <button class="tab-btn" data-tab="tab-config">⚙️ Contatos Oficiais</button>
+      <button class="tab-btn" data-tab="tab-exportar">📥 Exportar / Backup</button>
+    </nav>
+
+    <!-- TAB 1: LISTA DE IMÓVEIS -->
+    <section id="tab-imoveis" class="tab-panel active">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2>Catálogo de Imóveis</h2>
+            <p class="sub">Gerencie todos os anúncios exibidos na vitrine e no mapa interativo.</p>
+          </div>
+          <button type="button" class="btn btn-primary" id="btn-abrir-novo">
+            ➕ Cadastrar Novo Imóvel
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Foto</th>
+                <th>Título</th>
+                <th>Finalidade</th>
+                <th>Tipo</th>
+                <th>Bairro</th>
+                <th>Preço</th>
+                <th>Geolocalização</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-imoveis-corpo"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: NOVO / EDITAR IMÓVEL -->
+    <section id="tab-novo" class="tab-panel">
+      <div class="card">
+        <h2 id="form-titulo">Cadastrar Novo Imóvel</h2>
+        <p class="sub">Preencha os dados abaixo e clique no mapa para definir as coordenadas do imóvel.</p>
+
+        <form id="form-imovel">
+          <input type="hidden" id="imovel-id">
+
+          <div class="form-grid">
+            <div class="form-group col-span-2">
+              <label for="campo-titulo">Título Descritivo do Imóvel *</label>
+              <input type="text" id="campo-titulo" required placeholder="Ex: Casa Ampla 3 Quartos com Quintal">
+            </div>
+
+            <div class="form-group">
+              <label for="campo-finalidade">Finalidade *</label>
+              <select id="campo-finalidade" required>
+                <option value="ALUGUEL">Aluguel</option>
+                <option value="VENDA">Venda</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="campo-tipo">Tipo de Imóvel *</label>
+              <select id="campo-tipo" required>
+                <option value="CASA">Casa</option>
+                <option value="APARTAMENTO">Apartamento</option>
+                <option value="LOTE">Lote / Terreno</option>
+                <option value="KITNET">Kitnet</option>
+                <option value="COMERCIAL">Ponto Comercial</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="campo-bairro">Bairro em Augustinópolis *</label>
+              <select id="campo-bairro" required></select>
+            </div>
+
+            <div class="form-group">
+              <label for="campo-cidade">Cidade / UF</label>
+              <input type="text" id="campo-cidade" value="Augustinópolis - TO" readonly>
+            </div>
+
+            <div class="form-group">
+              <label for="campo-preco">Preço Exibido</label>
+              <input type="text" id="campo-preco" placeholder="Ex: R$ 1.200/mês ou R$ 68.000">
+            </div>
+
+            <div class="form-group">
+              <label for="campo-preco-numero">Valor Numérico (para filtros)</label>
+              <input type="number" id="campo-preco-numero" placeholder="Ex: 1200 ou 68000" min="0">
+              <span class="help-text">Opcional. Usado para filtros por faixa de preço.</span>
+            </div>
+
+            <div class="form-group">
+              <label for="campo-exibir-preco">Exibir Preço Publicamente?</label>
+              <select id="campo-exibir-preco">
+                <option value="true">Sim, exibir preço</option>
+                <option value="false">Não, sob consulta</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="campo-quartos">Quartos</label>
+              <input type="number" id="campo-quartos" min="0" placeholder="Ex: 3 (ou deixe vazio)">
+            </div>
+
+            <div class="form-group">
+              <label for="campo-banheiros">Banheiros</label>
+              <input type="number" id="campo-banheiros" min="0" placeholder="Ex: 2">
+            </div>
+
+            <div class="form-group">
+              <label for="campo-area">Área / Metragem</label>
+              <input type="text" id="campo-area" placeholder="Ex: 140 m² ou 360 m² (12x30)">
+            </div>
+
+            <div class="form-group col-span-2">
+              <label for="campo-imagem">URL da Fotografia Principal</label>
+              <input type="url" id="campo-imagem" placeholder="https://exemplo.com/foto.jpg">
+            </div>
+
+            <div class="form-group">
+              <label for="campo-publicado">Situação do Anúncio</label>
+              <select id="campo-publicado">
+                <option value="true">Publicado (Visível no site e mapa)</option>
+                <option value="false">Rascunho / Pausado</option>
+              </select>
+            </div>
+
+            <div class="form-group col-span-3">
+              <label>Localização Geográfica no Mapa (Clique no mapa para marcar a posição):</label>
+              <div id="admin-map"></div>
+              <span class="help-text">Dica: Dê zoom no mapa e clique próximo ao local do imóvel para capturar as coordenadas automaticamente.</span>
+            </div>
+
+            <div class="form-group">
+              <label for="campo-lat">Latitude</label>
+              <input type="text" id="campo-lat" placeholder="Ex: -5.4686">
+            </div>
+
+            <div class="form-group">
+              <label for="campo-lng">Longitude</label>
+              <input type="text" id="campo-lng" placeholder="Ex: -47.8867">
+            </div>
+
+            <div class="form-group">
+              <label for="campo-precisao">Política de Privacidade de Localização *</label>
+              <select id="campo-precisao" required>
+                <option value="aproximada">Aproximada (Recomendado — protege a privacidade do proprietário)</option>
+                <option value="exata">Exata (Apenas se expressamente autorizado)</option>
+              </select>
+              <span class="help-text">Por padrão, a localização aproximada desenha um raio protetor sem revelar a casa exata.</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 12px;">
+            <button type="submit" class="btn btn-primary" id="btn-salvar-imovel">💾 Salvar Imóvel</button>
+            <button type="button" class="btn btn-outline" id="btn-cancelar-edicao">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 3: BAIRROS E REGIÕES -->
+    <section id="tab-bairros" class="tab-panel">
+      <div class="card">
+        <h2>Bairros e Regiões de Augustinópolis</h2>
+        <p class="sub">Organize as regiões e bairros disponíveis na busca e no guia de localidades.</p>
+
+        <form id="form-novo-bairro" style="display: flex; gap: 12px; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap;">
+          <div class="form-group" style="flex: 1; min-width: 200px;">
+            <label for="novo-bairro-nome">Nome do Bairro</label>
+            <input type="text" id="novo-bairro-nome" placeholder="Ex: Bairro Universitário" required>
+          </div>
+          <div class="form-group" style="width: 200px;">
+            <label for="novo-bairro-regiao">Região</label>
+            <select id="novo-bairro-regiao" required>
+              <option value="sul">Região Sul</option>
+              <option value="norte">Região Norte</option>
+              <option value="oeste">Região Oeste</option>
+              <option value="leste">Região Leste</option>
+              <option value="a-validar">Localidades a validar</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">➕ Adicionar Bairro</button>
+        </form>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Bairro</th>
+                <th>Região</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-bairros-corpo"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: CONTATOS OFICIAIS -->
+    <section id="tab-config" class="tab-panel">
+      <div class="card">
+        <h2>Dados Institucionais e Contato Oficial</h2>
+        <p class="sub">Centralize as informações oficiais da marca CHAVE DO BICO que aparecem em todo o site.</p>
+
+        <form id="form-config">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="cfg-whatsapp">WhatsApp Oficial (somente dígitos)</label>
+              <input type="text" id="cfg-whatsapp" required>
+              <span class="help-text">Ex: 5563999630980</span>
+            </div>
+            <div class="form-group">
+              <label for="cfg-whatsapp-txt">WhatsApp Exibição Formatada</label>
+              <input type="text" id="cfg-whatsapp-txt" required>
+              <span class="help-text">Ex: (63) 99963-0980</span>
+            </div>
+            <div class="form-group">
+              <label for="cfg-email">E-mail Oficial</label>
+              <input type="email" id="cfg-email" required>
+            </div>
+            <div class="form-group">
+              <label for="cfg-cidade">Cidade de Atuação</label>
+              <input type="text" id="cfg-cidade" required>
+            </div>
+            <div class="form-group">
+              <label for="cfg-regiao">Região Geográfica</label>
+              <input type="text" id="cfg-regiao" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Salvar Configurações</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 5: EXPORTAR E BACKUP -->
+    <section id="tab-exportar" class="tab-panel">
+      <div class="card">
+        <h2>Exportação de Dados (`site-data.js`)</h2>
+        <p class="sub">
+          Como este site opera em modo estático de alta performance, todas as alterações podem ser salvas no <strong>localStorage</strong> do seu navegador e baixadas como o arquivo oficial <code>data/site-data.js</code>.
+        </p>
+
+        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+          <button type="button" class="btn btn-primary" id="btn-baixar-js">📥 Baixar Arquivo site-data.js</button>
+          <button type="button" class="btn btn-outline" id="btn-copiar-js">📋 Copiar Código</button>
+          <button type="button" class="btn btn-danger" id="btn-resetar-padrao" style="margin-left: auto;">⚠️ Restaurar Padrões</button>
+        </div>
+
+        <textarea class="code-box" id="codigo-exportacao" readonly></textarea>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast">Alterações salvas com sucesso!</div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <!-- Dados Base do Site -->
+  <script src="data/site-data.js"></script>
+
+  <script>
+    // Recupera dados do localStorage ou usa o site-data.js inicial
+    let DB = null;
+    const STORAGE_KEY = 'CHAVE_DO_BICO_LOCAL_DATA';
+
+    function carregarDados() {
+      const salvo = localStorage.getItem(STORAGE_KEY);
+      if (salvo) {
+        try {
+          DB = JSON.parse(salvo);
+        } catch(e) {
+          DB = window.CHAVE_DO_BICO_DATA;
+        }
+      } else {
+        DB = window.CHAVE_DO_BICO_DATA;
+      }
+    }
+
+    function salvarDados(silencioso = false) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+      gerarExportacao();
+      atualizarContadores();
+      if (!silencioso) {
+        mostrarToast('Alterações salvas no navegador!');
+      }
+    }
+
+    function mostrarToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 3000);
+    }
+
+    // Inicialização do Mapa Administrativo
+    let adminMap = null;
+    let adminMarker = null;
+
+    function initAdminMap() {
+      if (adminMap) return;
+      const centro = DB.config.mapaCentro || { lat: -5.4686, lng: -47.8867, zoom: 14 };
+      adminMap = L.map('admin-map').setView([centro.lat, centro.lng], 14);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(adminMap);
+
+      adminMap.on('click', function(e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+        document.getElementById('campo-lat').value = lat;
+        document.getElementById('campo-lng').value = lng;
+        posicionarMarcador(lat, lng);
+      });
+    }
+
+    function posicionarMarcador(lat, lng) {
+      if (!adminMap) return;
+      if (adminMarker) adminMap.removeLayer(adminMarker);
+      adminMarker = L.marker([lat, lng]).addTo(adminMap);
+      adminMap.panTo([lat, lng]);
+    }
+
+    // Navegação por Abas
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const targetId = btn.getAttribute('data-tab');
+        document.getElementById(targetId).classList.add('active');
+
+        if (targetId === 'tab-novo') {
+          setTimeout(() => {
+            initAdminMap();
+            adminMap.invalidateSize();
+          }, 150);
+        }
+      });
+    });
+
+    document.getElementById('btn-abrir-novo').addEventListener('click', () => {
+      limparFormularioImovel();
+      document.querySelector('[data-tab="tab-novo"]').click();
+    });
+
+    // Renderizar Tabela de Imóveis
+    function renderTabelaImoveis() {
+      const corpo = document.getElementById('tabela-imoveis-corpo');
+      corpo.innerHTML = '';
+
+      DB.imoveis.forEach(imovel => {
+        const temCoord = imovel.latitude && imovel.longitude;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><img src="${imovel.imagem || 'logo.jpg'}" style="width: 50px; height: 35px; object-fit: cover; border-radius: 4px;"></td>
+          <td><strong>${imovel.titulo}</strong></td>
+          <td><span class="badge ${imovel.finalidade === 'VENDA' ? 'badge-success' : 'badge-info'}">${imovel.finalidade}</span></td>
+          <td>${imovel.tipo}</td>
+          <td>${imovel.bairro}</td>
+          <td>${imovel.preco || 'Sob consulta'}</td>
+          <td>
+            ${temCoord 
+              ? `<span class="badge badge-success">📍 ${imovel.precisaoLocalizacao === 'exata' ? 'Exata' : 'Aproximada'}</span>`
+              : `<span class="badge badge-warning">⚠️ Pendente de Coordenadas</span>`}
+          </td>
+          <td>
+            <span class="badge ${imovel.publicado !== false ? 'badge-success' : 'badge-danger'}">
+              ${imovel.publicado !== false ? 'Publicado' : 'Pausado'}
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-outline btn-sm" onclick="editarImovel(${imovel.id})">✏️ Editar</button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="excluirImovel(${imovel.id})">🗑️</button>
+            </div>
+          </td>
+        `;
+        corpo.appendChild(tr);
+      });
+      atualizarContadores();
+    }
+
+    // Preencher Select de Bairros no Form
+    function popularSelectBairros() {
+      const select = document.getElementById('campo-bairro');
+      select.innerHTML = '<option value="">Selecione o bairro...</option>';
+      DB.bairros.filter(b => b.ativo !== false).sort((a,b) => a.nome.localeCompare(b.nome)).forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.nome;
+        opt.textContent = b.nome;
+        select.appendChild(opt);
+      });
+    }
+
+    // Formulário de Imóvel (Salvar / Editar)
+    document.getElementById('form-imovel').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const id = document.getElementById('imovel-id').value;
+      const latVal = document.getElementById('campo-lat').value.trim();
+      const lngVal = document.getElementById('campo-lng').value.trim();
+
+      const dados = {
+        titulo: document.getElementById('campo-titulo').value.trim(),
+        finalidade: document.getElementById('campo-finalidade').value,
+        tipo: document.getElementById('campo-tipo').value,
+        bairro: document.getElementById('campo-bairro').value,
+        cidade: 'Augustinópolis - TO',
+        preco: document.getElementById('campo-preco').value.trim(),
+        precoNumero: document.getElementById('campo-preco-numero').value ? Number(document.getElementById('campo-preco-numero').value) : null,
+        exibirPreco: document.getElementById('campo-exibir-preco').value === 'true',
+        quartos: document.getElementById('campo-quartos').value ? Number(document.getElementById('campo-quartos').value) : null,
+        banheiros: document.getElementById('campo-banheiros').value ? Number(document.getElementById('campo-banheiros').value) : null,
+        area: document.getElementById('campo-area').value.trim(),
+        imagem: document.getElementById('campo-imagem').value.trim() || 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80',
+        publicado: document.getElementById('campo-publicado').value === 'true',
+        latitude: latVal ? Number(latVal) : null,
+        longitude: lngVal ? Number(lngVal) : null,
+        precisaoLocalizacao: document.getElementById('campo-precisao').value
+      };
+
+      if (id) {
+        const idx = DB.imoveis.findIndex(i => String(i.id) === String(id));
+        if (idx >= 0) {
+          DB.imoveis[idx] = { ...DB.imoveis[idx], ...dados };
+        }
+      } else {
+        DB.imoveis.unshift({
+          id: Date.now(),
+          ...dados
+        });
+      }
+
+      salvarDados();
+      renderTabelaImoveis();
+      limparFormularioImovel();
+      document.querySelector('[data-tab="tab-imoveis"]').click();
+    });
+
+    window.editarImovel = function(id) {
+      const imovel = DB.imoveis.find(i => String(i.id) === String(id));
+      if (!imovel) return;
+
+      document.getElementById('imovel-id').value = imovel.id;
+      document.getElementById('form-titulo').textContent = `Editar Imóvel #${imovel.id}`;
+      document.getElementById('campo-titulo').value = imovel.titulo || '';
+      document.getElementById('campo-finalidade').value = imovel.finalidade || 'ALUGUEL';
+      document.getElementById('campo-tipo').value = imovel.tipo || 'CASA';
+      document.getElementById('campo-bairro').value = imovel.bairro || '';
+      document.getElementById('campo-preco').value = imovel.preco || '';
+      document.getElementById('campo-preco-numero').value = imovel.precoNumero || '';
+      document.getElementById('campo-exibir-preco').value = String(imovel.exibirPreco !== false);
+      document.getElementById('campo-quartos').value = imovel.quartos || '';
+      document.getElementById('campo-banheiros').value = imovel.banheiros || '';
+      document.getElementById('campo-area').value = imovel.area || '';
+      document.getElementById('campo-imagem').value = imovel.imagem || '';
+      document.getElementById('campo-publicado').value = String(imovel.publicado !== false);
+      document.getElementById('campo-lat').value = imovel.latitude || '';
+      document.getElementById('campo-lng').value = imovel.longitude || '';
+      document.getElementById('campo-precisao').value = imovel.precisaoLocalizacao || 'aproximada';
+
+      document.querySelector('[data-tab="tab-novo"]').click();
+
+      setTimeout(() => {
+        if (imovel.latitude && imovel.longitude) {
+          posicionarMarcador(imovel.latitude, imovel.longitude);
+        }
+      }, 200);
+    };
+
+    window.excluirImovel = function(id) {
+      if (confirm('Deseja realmente excluir este anúncio?')) {
+        DB.imoveis = DB.imoveis.filter(i => String(i.id) !== String(id));
+        salvarDados();
+        renderTabelaImoveis();
+      }
+    };
+
+    function limparFormularioImovel() {
+      document.getElementById('form-imovel').reset();
+      document.getElementById('imovel-id').value = '';
+      document.getElementById('form-titulo').textContent = 'Cadastrar Novo Imóvel';
+      if (adminMarker && adminMap) {
+        adminMap.removeLayer(adminMarker);
+        adminMarker = null;
+      }
+    }
+    document.getElementById('btn-cancelar-edicao').addEventListener('click', () => {
+      limparFormularioImovel();
+      document.querySelector('[data-tab="tab-imoveis"]').click();
+    });
+
+    // Bairros
+    function renderTabelaBairros() {
+      const corpo = document.getElementById('tabela-bairros-corpo');
+      corpo.innerHTML = '';
+      DB.bairros.forEach(b => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${b.nome}</strong></td>
+          <td>${b.regiao.toUpperCase()}</td>
+          <td><span class="badge ${b.ativo !== false ? 'badge-success' : 'badge-danger'}">${b.ativo !== false ? 'Ativo' : 'Inativo'}</span></td>
+          <td>
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleBairro('${b.id}')">
+              ${b.ativo !== false ? 'Desativar' : 'Ativar'}
+            </button>
+          </td>
+        `;
+        corpo.appendChild(tr);
+      });
+      atualizarContadores();
+    }
+
+    window.toggleBairro = function(id) {
+      const b = DB.bairros.find(x => x.id === id);
+      if (b) {
+        b.ativo = (b.ativo === false) ? true : false;
+        salvarDados();
+        renderTabelaBairros();
+        popularSelectBairros();
+      }
+    };
+
+    document.getElementById('form-novo-bairro').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const nome = document.getElementById('novo-bairro-nome').value.trim();
+      const regiao = document.getElementById('novo-bairro-regiao').value;
+      if (!nome) return;
+
+      const id = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-');
+      DB.bairros.push({
+        id: id,
+        nome: nome,
+        regiao: regiao,
+        ativo: true,
+        validado: true
+      });
+      salvarDados();
+      renderTabelaBairros();
+      popularSelectBairros();
+      document.getElementById('novo-bairro-nome').value = '';
+    });
+
+    // Configurações
+    function carregarConfiguracoes() {
+      const cfg = DB.config;
+      document.getElementById('cfg-whatsapp').value = cfg.whatsappNumero || '';
+      document.getElementById('cfg-whatsapp-txt').value = cfg.whatsappExibicao || '';
+      document.getElementById('cfg-email').value = cfg.email || '';
+      document.getElementById('cfg-cidade').value = cfg.cidade || '';
+      document.getElementById('cfg-regiao').value = cfg.regiaoGeografica || '';
+    }
+
+    document.getElementById('form-config').addEventListener('submit', function(e) {
+      e.preventDefault();
+      DB.config.whatsappNumero = document.getElementById('cfg-whatsapp').value.trim();
+      DB.config.whatsappExibicao = document.getElementById('cfg-whatsapp-txt').value.trim();
+      DB.config.email = document.getElementById('cfg-email').value.trim();
+      DB.config.cidade = document.getElementById('cfg-cidade').value.trim();
+      DB.config.regiaoGeografica = document.getElementById('cfg-regiao').value.trim();
+      salvarDados();
+    });
+
+    // Exportação
+    function gerarExportacao() {
+      const json = JSON.stringify(DB, null, 2);
+      const jsCode = `/* ==========================================================================
+   CHAVE DO BICO — DADOS CENTRALIZADOS DO SITE
+   Gerado automaticamente pelo Painel Administrativo em ${new Date().toLocaleString('pt-BR')}
+   ========================================================================== */
+window.CHAVE_DO_BICO_DATA = ${json};
+`;
+      document.getElementById('codigo-exportacao').value = jsCode;
+    }
+
+    document.getElementById('btn-exportar-topo').addEventListener('click', () => {
+      document.querySelector('[data-tab="tab-exportar"]').click();
+    });
+
+    document.getElementById('btn-copiar-js').addEventListener('click', () => {
+      const txt = document.getElementById('codigo-exportacao');
+      txt.select();
+      navigator.clipboard.writeText(txt.value);
+      mostrarToast('Código copiado para a área de transferência!');
+    });
+
+    document.getElementById('btn-baixar-js').addEventListener('click', () => {
+      const blob = new Blob([document.getElementById('codigo-exportacao').value], { type: 'application/javascript;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'site-data.js';
+      a.click();
+      mostrarToast('Download iniciado! Salve na pasta data/site-data.js');
+    });
+
+    document.getElementById('btn-resetar-padrao').addEventListener('click', () => {
+      if (confirm('Atenção: deseja restaurar os dados originais?')) {
+        localStorage.removeItem(STORAGE_KEY);
+        carregarDados();
+        renderTabelaImoveis();
+        renderTabelaBairros();
+        carregarConfiguracoes();
+        gerarExportacao();
+        mostrarToast('Dados restaurados para o padrão.');
+      }
+    });
+
+    function atualizarContadores() {
+      document.getElementById('contagem-imoveis').textContent = DB.imoveis.length;
+      document.getElementById('contagem-bairros').textContent = DB.bairros.length;
+    }
+
+    // Inicialização
+    carregarDados();
+    renderTabelaImoveis();
+    renderTabelaBairros();
+    popularSelectBairros();
+    carregarConfiguracoes();
+    gerarExportacao();
+  </script>
+</body>
+</html>
