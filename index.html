@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>CHAVE DO BICO | Imóveis em Augustinópolis e Região</title>
   <meta name="description" content="Encontre casas, apartamentos, kitnets e imóveis comerciais para alugar ou comprar em Augustinópolis-TO e região do Bico do Papagaio.">
   <meta name="keywords" content="imóveis em augustinópolis, casas para alugar em augustinópolis, casas à venda em augustinópolis, apartamentos em augustinópolis, kitnets em augustinópolis, imóveis no bico do papagaio, imóveis comerciais em augustinópolis, lotes à venda augustinópolis to, chave do bico">
@@ -98,14 +98,27 @@
       --container-max: 1200px;
     }
 
-    /* CSS Reset */
+    /* CSS Reset & Restrição Estrita de Viewport Mobile */
     *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
+    html {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      scroll-behavior: smooth;
+    }
+
     body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      position: relative;
       font-family: var(--font-body);
       font-size: 16px;
       line-height: 1.6;
@@ -113,7 +126,10 @@
       background-color: var(--surface-muted);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      overflow-x: hidden;
+    }
+
+    img, picture, video, canvas, svg {
+      max-width: 100%;
     }
 
     a {
@@ -881,19 +897,28 @@
       }
     }
 
+    .btn-text-mobile {
+      display: none;
+    }
+
     @media (max-width: 768px) {
+      .container {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
       .header-inner {
-        height: 72px;
+        height: 68px;
       }
 
       .brand-logo-img {
-        width: 44px;
-        height: 44px;
-        border-radius: 11px;
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
       }
 
       .brand-name {
-        font-size: 18px;
+        font-size: 17px;
       }
 
       .brand-slogan {
@@ -904,17 +929,45 @@
         display: none;
       }
 
+      .header-contact-link {
+        padding: 8px;
+      }
+
+      .btn-text-desktop {
+        display: none;
+      }
+
+      .btn-text-mobile {
+        display: inline;
+      }
+
+      .header-actions {
+        gap: 8px;
+      }
+
+      .header-cta-btn {
+        padding: 0 14px;
+        font-size: 13px;
+        height: 38px;
+        white-space: nowrap;
+      }
+
       .hero-section {
-        padding-top: 40px;
-        padding-bottom: 74px;
+        padding-top: 36px;
+        padding-bottom: 60px;
       }
 
       .hero-title {
-        font-size: 34px;
+        font-size: clamp(26px, 6.8vw, 34px);
+        line-height: 1.2;
+        word-break: normal;
+        overflow-wrap: break-word;
       }
 
       .hero-subtitle {
-        font-size: 16px;
+        font-size: 15.5px;
+        line-height: 1.55;
+        margin-bottom: 24px;
       }
 
       .hero-cta-group {
@@ -931,12 +984,13 @@
       }
 
       .search-bar-wrapper {
-        margin-top: -36px;
-        padding-bottom: 40px;
+        margin-top: -28px;
+        padding-bottom: 36px;
       }
 
       .search-card {
-        padding: 22px 20px 24px;
+        padding: 22px 18px 24px;
+        border-radius: 16px;
       }
 
       .filters-form {
@@ -945,6 +999,46 @@
 
       .filters-form .btn-search {
         grid-column: span 1;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .header-inner {
+        height: 60px;
+      }
+
+      .brand-logo {
+        gap: 8px;
+      }
+
+      .brand-logo-img {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+      }
+
+      .brand-name {
+        font-size: 15px;
+      }
+
+      .header-contact-link {
+        display: none;
+      }
+
+      .header-cta-btn {
+        padding: 0 12px;
+        font-size: 12.5px;
+        height: 36px;
+      }
+
+      .search-card {
+        padding: 18px 14px 20px;
       }
     }
 
@@ -1743,16 +1837,64 @@
         font-size: 15px;
       }
 
+      .carousel-top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .carousel-controls {
+        align-self: flex-end;
+      }
+
       .carousel-block {
         padding: 24px 16px 20px;
       }
 
       .carousel-slide {
         flex: 0 0 100%; /* 1 coluna em telas < 768px */
+        max-width: 100%;
+      }
+
+      .carousel-track {
+        max-width: 100%;
       }
 
       .property-body {
         padding: 16px 14px;
+      }
+
+      .section-footer-cta .btn-lg {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .transparency-card {
+        padding: 20px 14px;
+      }
+
+      .transparency-title {
+        font-size: 19px;
+      }
+
+      .transparency-text {
+        font-size: 14px;
+      }
+
+      .section-title {
+        font-size: 24px;
+      }
+
+      .carousel-heading {
+        font-size: 20px;
+      }
+
+      .carousel-block {
+        padding: 18px 12px 18px;
+        border-radius: 16px;
       }
     }
 
@@ -1823,8 +1965,9 @@
             </svg>
             <span>Augustinópolis-TO</span>
           </a>
-          <a href="https://wa.me/5563999630980" data-cdb-wa="anuncio" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
-            <span>📢 Anunciar Meu Imóvel</span>
+          <a href="https://wa.me/5563999630980" data-cdb-wa="anuncio" target="_blank" rel="noopener" class="btn btn-secondary btn-sm header-cta-btn">
+            <span class="btn-text-desktop">📢 Anunciar Meu Imóvel</span>
+            <span class="btn-text-mobile">📢 Anunciar</span>
           </a>
         </div>
       </div>

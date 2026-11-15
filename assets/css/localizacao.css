@@ -384,11 +384,69 @@
     grid-template-columns: 1fr;
     height: auto;
   }
-  .map-canvas-wrapper { height: 460px; }
+  .map-canvas-wrapper { height: 440px; }
   .map-list { max-height: 520px; }
   .map-layout[data-view="mapa"] .map-list { display: none; }
   .map-layout[data-view="lista"] .map-canvas-wrapper { display: none; }
   .map-filters .btn-clear { margin-left: 0; }
+}
+
+@media (max-width: 768px) {
+  /* Filtros do Mapa 100% Fluidos no Celular */
+  .map-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 12px;
+  }
+
+  .map-filters .chip-group {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .map-filters .chip {
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .chip-divider {
+    display: none;
+  }
+
+  .map-filters .select-wrapper,
+  .map-filters .filter-select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .price-range {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .price-range input {
+    flex: 1;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .map-filters .btn-clear {
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .map-canvas-wrapper { height: 350px !important; }
+  .leaflet-popup-content { width: 220px !important; }
 }
 
 /* Marcadores com identidade visual */
@@ -744,6 +802,13 @@
   .orb-tl, .orb-tr { transform: scale(0.75); }
 }
 
+@media (max-width: 768px) {
+  /* Em celulares e tablets, oculta a cena 3D para evitar estouros de viewport e poupar bateria */
+  .bairros-3d-scene {
+    display: none !important;
+  }
+}
+
 @media (max-width: 600px) {
   .pos-ml-2, .pos-mr-2 { display: none; }
   .float-item { transform: scale(0.58); opacity: 0.55; }
@@ -868,6 +933,12 @@
   .contact-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .contact-form, .contact-info { padding: 24px 20px; }
+}
+
+@media (max-width: 600px) {
+  .form-buttons { flex-direction: column; }
+  .form-buttons .btn { width: 100%; min-width: 0; }
+  .footer-desc { max-width: 100%; }
 }
 
 /* --------------------------------------------------------------------------
