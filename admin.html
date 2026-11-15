@@ -1310,7 +1310,19 @@
       }
     };
 
-    // Formulário de Imóvel (Salvar / Editar no Firebase)
+    function salvarImovelNoDBLocal(dados) {
+      if (!DB.imoveis) DB.imoveis = [];
+      const idx = DB.imoveis.findIndex(i => String(i.id) === String(dados.id));
+      if (idx >= 0) {
+        DB.imoveis[idx] = Object.assign({}, DB.imoveis[idx], dados);
+      } else {
+        DB.imoveis.unshift(dados);
+      }
+      salvarDados();
+      renderizarCatalogo();
+    }
+
+    // Formulário de Imóvel (Salvar / Editar no Firebase com Fallback Seguro)
     document.getElementById('form-imovel').addEventListener('submit', async function(e) {
       e.preventDefault();
       const btnSalvar = document.getElementById('btn-salvar-imovel');
@@ -1350,14 +1362,41 @@
           progressBox.style.display = 'block';
         }
 
+        let salvoNaCloud = false;
         if (window.CDB_FIREBASE) {
-          await window.CDB_FIREBASE.salvarImovel(dados, arquivoFotoSelecionada, function(pct) {
-            progressBar.style.width = pct.toFixed(0) + '%';
-            progressText.textContent = 'Enviando foto para a nuvem... ' + pct.toFixed(0) + '%';
-          });
-          mostrarToast('✅ Imóvel publicado na nuvem em tempo real!');
+          try {
+            await window.CDB_FIREBASE.salvarImovel(dados, arquivoFotoSelecionada, function(pct) {
+              progressBar.style.width = pct.toFixed(0) + '%';
+              progressText.textContent = 'Enviando foto para a nuvem... ' + pct.toFixed(0) + '%';
+            });
+            salvoNaCloud = true;
+            mostrarToast('✅ Imóvel publicado na nuvem em tempo real!');
+          } catch (errNuvem) {
+            console.warn('[Admin] Nuvem indisponível ou pendente de ativação:', errNuvem);
+            // Garante a imagem em Base64 para não perder a foto selecionada
+            if (arquivoFotoSelecionada && !dados.imagem.startsWith('data:') && !dados.imagem.startsWith('http')) {
+              if (window.CDB_FIREBASE && window.CDB_FIREBASE.fileParaBase64) {
+                dados.imagem = await window.CDB_FIREBASE.fileParaBase64(arquivoFotoSelecionada);
+              }
+            }
+            salvarImovelNoDBLocal(dados);
+            mostrarToast('💾 Salvo no seu navegador! (Cloud pendente de ativação no console)');
+            alert(
+              '⚠️ SEU IMÓVEL FOI SALVO COM SUCESSO!\n\n' +
+              'Os dados e a foto foram guardados com segurança no seu navegador.\n\n' +
+              '📌 Para ativar a sincronização em nuvem em tempo real no projeto "chave-do-bico":\n' +
+              '1. Acesse: https://console.firebase.google.com/project/chave-do-bico/firestore\n' +
+              '2. Clique no botão "Criar banco de dados" (escolha Iniciar no Modo de Teste)\n' +
+              '3. Acesse "Storage" no menu e clique em "Primeiros passos"\n\n' +
+              'Após isso, todo imóvel sincronizará automaticamente na nuvem sem travar!'
+            );
+          }
         } else {
-          salvarDados();
+          if (arquivoFotoSelecionada && window.CDB_FIREBASE && window.CDB_FIREBASE.fileParaBase64) {
+            dados.imagem = await window.CDB_FIREBASE.fileParaBase64(arquivoFotoSelecionada);
+          }
+          salvarImovelNoDBLocal(dados);
+          mostrarToast('💾 Salvo localmente!');
         }
 
         limparFormularioImovel();
@@ -1369,7 +1408,7 @@
 
         document.querySelector('[data-tab="tab-imoveis"]').click();
       } catch (err) {
-        alert('Erro ao salvar imóvel: ' + err.message);
+        alert('Erro ao processar imóvel: ' + err.message);
       } finally {
         btnSalvar.disabled = false;
         btnSalvar.textContent = '💾 Salvar Imóvel na Nuvem';
@@ -1601,6 +1640,23 @@
 
     // Inicialização da Escuta em Tempo Real do Firestore no Admin
     function iniciarSincronizacaoNuvemAdmin() {
+      window.addEventListener('cdb:firebase-error', function (e) {
+        const cloudBadge = document.getElementById('cloud-badge');
+        if (cloudBadge) {
+          cloudBadge.style.backgroundColor = 'rgba(245, 158, 11, 0.2)';
+          cloudBadge.style.borderColor = 'rgba(245, 158, 11, 0.6)';
+          cloudBadge.innerHTML = `
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; display: inline-block;"></span>
+            <span style="color: #FEF3C7; font-size: 12px; font-weight: 600;">⚠️ Nuvem Pendente de Ativação (Salvo Local)</span>
+          `;
+          cloudBadge.title = 'Clique para abrir o console e ativar o Cloud Firestore no projeto chave-do-bico';
+          cloudBadge.style.cursor = 'pointer';
+          cloudBadge.onclick = () => {
+            window.open('https://console.firebase.google.com/project/chave-do-bico/firestore', '_blank');
+          };
+        }
+      });
+
       if (window.CDB_FIREBASE) {
         window.CDB_FIREBASE.ouvirImoveis(function(imoveisNuvem) {
           if (Array.isArray(imoveisNuvem)) {

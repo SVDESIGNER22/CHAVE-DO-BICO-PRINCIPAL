@@ -48,46 +48,109 @@
   }
 
   /* --------------------------------------------------------------------------
-     UPLOAD DE FOTOGRAFIA PARA O FIREBASE STORAGE
+     UTILITÁRIOS: TIMEOUT DE REDE & CONVERSÃO DE IMAGEM BASE64
+     -------------------------------------------------------------------------- */
+  function withTimeout(promise, ms, mensagemErro) {
+    let timer;
+    const timeoutPromise = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        reject(new Error(mensagemErro || `Tempo limite de conexão excedido (${ms / 1000}s).`));
+      }, ms);
+    });
+    return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+  }
+
+  function fileParaBase64(file, maxWidth = 1200, qualidade = 0.8) {
+    return new Promise((resolve, reject) => {
+      if (!file || !(file instanceof Blob)) {
+        return resolve(null);
+      }
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          try {
+            const canvas = document.createElement('canvas');
+            let w = img.width;
+            let h = img.height;
+            if (w > maxWidth) {
+              h = Math.round((h * maxWidth) / w);
+              w = maxWidth;
+            }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', qualidade));
+          } catch (err) {
+            resolve(e.target.result);
+          }
+        };
+        img.onerror = () => resolve(e.target.result);
+        img.src = e.target.result;
+      };
+      reader.onerror = err => reject(err);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /* --------------------------------------------------------------------------
+     UPLOAD DE FOTOGRAFIA PARA O FIREBASE STORAGE (COM FALLBACK SEGURO)
      Recebe um File do <input type="file"> e envia para imoveis/{timestamp}_{nome}
      -------------------------------------------------------------------------- */
   async function uploadFotoImovel(file, onProgress) {
-    if (!storage) {
-      if (!initFirebase()) throw new Error('Firebase Storage não inicializado.');
-    }
     if (!file) return null;
 
-    // Sanitiza nome do arquivo
-    const extensao = file.name.split('.').pop().toLowerCase();
-    const nomeLimpo = file.name.replace(/[^a-zA-Z0-9]/g, '_');
-    const nomeArquivo = `imoveis/${Date.now()}_${nomeLimpo}.${extensao}`;
-    const storageRef = storage.ref().child(nomeArquivo);
+    if (!storage) {
+      if (!initFirebase()) {
+        console.warn('[CDB Firebase Storage] Storage não inicializado. Usando conversão Base64.');
+        return await fileParaBase64(file);
+      }
+    }
 
-    const uploadTask = storageRef.put(file);
+    try {
+      // Sanitiza nome do arquivo
+      const extensao = file.name ? file.name.split('.').pop().toLowerCase() : 'jpg';
+      const nomeLimpo = (file.name || 'foto').replace(/[^a-zA-Z0-9]/g, '_');
+      const nomeArquivo = `imoveis/${Date.now()}_${nomeLimpo}.${extensao}`;
+      const storageRef = storage.ref().child(nomeArquivo);
 
-    return new Promise((resolve, reject) => {
-      uploadTask.on(
-        'state_changed',
-        snapshot => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          if (typeof onProgress === 'function') {
-            onProgress(progress);
+      const uploadTask = storageRef.put(file);
+
+      const urlPromise = new Promise((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          snapshot => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            if (typeof onProgress === 'function') {
+              onProgress(progress);
+            }
+          },
+          error => {
+            console.warn('[CDB Firebase Storage] Erro no upload:', error.message);
+            reject(error);
+          },
+          async () => {
+            try {
+              const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+              resolve(downloadURL);
+            } catch (err) {
+              reject(err);
+            }
           }
-        },
-        error => {
-          console.error('[CDB Firebase Storage] Erro no upload:', error);
-          reject(error);
-        },
-        async () => {
-          try {
-            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-            resolve(downloadURL);
-          } catch (err) {
-            reject(err);
-          }
-        }
+        );
+      });
+
+      // Limita a 10s para não travar a tela se o bucket estiver inacessível
+      return await withTimeout(
+        urlPromise,
+        10000,
+        'O Firebase Storage ainda não foi ativado no console. Usando foto compactada localmente.'
       );
-    });
+    } catch (err) {
+      console.warn('[CDB Firebase Storage] Falha no upload para nuvem, aplicando fallback em Base64:', err.message);
+      return await fileParaBase64(file);
+    }
   }
 
   /* --------------------------------------------------------------------------
@@ -100,7 +163,7 @@
 
     const dados = Object.assign({}, imovelDados);
 
-    // Se houver arquivo de foto novo, realiza o upload primeiro
+    // Se houver arquivo de foto novo, realiza o upload com fallback automático
     if (arquivoFoto) {
       const urlFoto = await uploadFotoImovel(arquivoFoto, onProgress);
       if (urlFoto) {
@@ -117,8 +180,13 @@
       dados.criadoEm = firebase.firestore.FieldValue.serverTimestamp();
     }
 
-    // Salva ou atualiza no Firestore
-    await db.collection('imoveis').doc(id).set(dados, { merge: true });
+    // Salva ou atualiza no Firestore com timeout de 8 segundos para evitar travamento
+    await withTimeout(
+      db.collection('imoveis').doc(id).set(dados, { merge: true }),
+      8000,
+      'O Cloud Firestore não respondeu em 8s. Provavelmente o banco de dados ainda não foi criado no console do Firebase (https://console.firebase.google.com/project/chave-do-bico/firestore).'
+    );
+
     console.log(`[CDB Firebase] Imóvel "${dados.titulo}" salvo com sucesso no Firestore (ID: ${id})`);
     return dados;
   }
@@ -189,7 +257,8 @@
         }
       },
       error => {
-        console.error('[CDB Firebase] Erro ao ouvir imóveis no Firestore:', error);
+        console.warn('[CDB Firebase] Erro ao ouvir imóveis no Firestore:', error.message);
+        window.dispatchEvent(new CustomEvent('cdb:firebase-error', { detail: error }));
       }
     );
 
@@ -204,7 +273,11 @@
       if (!initFirebase()) return;
     }
     try {
-      const snap = await db.collection('imoveis').limit(1).get();
+      const snap = await withTimeout(
+        db.collection('imoveis').limit(1).get(),
+        6000,
+        'Tempo limite ao verificar Firestore inicial.'
+      );
       if (snap.empty && Array.isArray(imoveisPadrao) && imoveisPadrao.length > 0) {
         console.log('[CDB Firebase] Firestore vazio. Migrando imóveis padrão do catálogo inicial...');
         const batch = db.batch();
@@ -235,6 +308,7 @@
     alternarStatusImovel,
     excluirImovel,
     ouvirImoveis,
-    sincronizarImoveisIniciaisSeVazio
+    sincronizarImoveisIniciaisSeVazio,
+    fileParaBase64
   };
 })();
