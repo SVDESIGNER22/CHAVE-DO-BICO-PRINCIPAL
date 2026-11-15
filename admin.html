@@ -305,6 +305,9 @@
       </div>
     </div>
     <div class="header-links">
+      <span id="firebase-status-badge" class="badge badge-success" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:6px 14px;">
+        ⚡ Nuvem Conectada (Tempo Real)
+      </span>
       <a href="index.html" class="btn btn-outline" style="color: #fff; border-color: rgba(255,255,255,0.4);">
         ← Ver Site
       </a>
@@ -437,8 +440,32 @@
             </div>
 
             <div class="form-group col-span-2">
-              <label for="campo-imagem">URL da Fotografia Principal</label>
-              <input type="url" id="campo-imagem" placeholder="https://exemplo.com/foto.jpg">
+              <label>Fotografia Principal do Imóvel *</label>
+              <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+                <input type="file" id="campo-foto-file" accept="image/*" style="display: none;">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-escolher-foto" onclick="document.getElementById('campo-foto-file').click()">
+                  📷 Escolher Foto do Celular / Computador
+                </button>
+                <span id="nome-foto-selecionada" style="font-size: 13px; color: var(--text-secondary);">Nenhum arquivo novo selecionado</span>
+              </div>
+
+              <!-- Pré-visualização da Foto -->
+              <div id="foto-preview-wrapper" style="display: none; margin-bottom: 10px;">
+                <div style="position: relative; display: inline-block;">
+                  <img id="foto-preview-img" src="" alt="Prévia da foto" style="max-height: 150px; max-width: 100%; border-radius: 8px; border: 2px solid var(--brand-accent); object-fit: cover;">
+                  <button type="button" id="btn-remover-foto" style="position: absolute; top: -8px; right: -8px; background: #B42318; color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 12px; font-weight: bold;">✕</button>
+                </div>
+              </div>
+
+              <!-- Barra de Progresso de Upload para o Firebase Storage -->
+              <div id="upload-progress-container" style="display: none; margin-bottom: 10px;">
+                <div style="height: 8px; width: 100%; background: #e2e8f0; border-radius: 9999px; overflow: hidden; margin-bottom: 4px;">
+                  <div id="upload-progress-bar" style="height: 100%; width: 0%; background: var(--brand-accent); transition: width 0.2s ease;"></div>
+                </div>
+                <span id="upload-progress-text" style="font-size: 12px; color: var(--brand-primary); font-weight: 700;">Enviando foto para a nuvem... 0%</span>
+              </div>
+
+              <input type="url" id="campo-imagem" placeholder="Ou se preferir, cole o link direto de uma imagem aqui...">
             </div>
 
             <div class="form-group">
@@ -585,6 +612,12 @@
   <!-- Dados Base do Site -->
   <script src="data/site-data.js"></script>
 
+  <!-- Firebase SDKs (Compat) & Sincronização em Tempo Real -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+  <script src="assets/js/firebase-sync.js"></script>
+
   <script>
     // Recupera dados do localStorage ou usa o site-data.js inicial
     let DB = null;
@@ -721,8 +754,194 @@
       });
     }
 
-    // Formulário de Imóvel (Salvar / Editar)
-    document.getElementById('form-imovel').addEventListener('submit', function(e) {
+    // Preview da Foto Selecionada
+    let arquivoFotoSelecionada = null;
+    document.getElementById('campo-foto-file').addEventListener('change', function(e) {
+      const file = e.target.files && e.target.files[0];
+      if (file) {
+        arquivoFotoSelecionada = file;
+        document.getElementById('nome-foto-selecionada').textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          document.getElementById('foto-preview-img').src = evt.target.result;
+          document.getElementById('foto-preview-wrapper').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('btn-remover-foto').addEventListener('click', function() {
+      arquivoFotoSelecionada = null;
+      document.getElementById('campo-foto-file').value = '';
+      document.getElementById('nome-foto-selecionada').textContent = 'Nenhum arquivo novo selecionado';
+      document.getElementById('foto-preview-wrapper').style.display = 'none';
+      document.getElementById('foto-preview-img').src = '';
+    });
+
+    // Alternar Situação do Imóvel (Alugado / Pausado ou Disponível)
+    window.togglePublicadoImovel = async function(id, novoStatus) {
+      try {
+        if (window.CDB_FIREBASE) {
+          await window.CDB_FIREBASE.alternarStatusImovel(id, novoStatus);
+          mostrarToast(novoStatus ? 'Imóvel REATIVADO no site!' : 'Imóvel marcado como ALUGADO (removido do site público)!');
+        } else {
+          const imovel = DB.imoveis.find(i => String(i.id) === String(id));
+          if (imovel) {
+            imovel.publicado = novoStatus;
+            salvarDados();
+            renderTabelaImoveis();
+          }
+        }
+      } catch (err) {
+        alert('Erro ao alterar status: ' + err.message);
+      }
+    };
+
+    // Excluir Imóvel definitivamente do Firebase
+    window.excluirImovelFirebase = async function(id) {
+      if (confirm('Deseja realmente EXCLUIR este anúncio definitivamente do banco de dados?')) {
+        try {
+          if (window.CDB_FIREBASE) {
+            await window.CDB_FIREBASE.excluirImovel(id);
+            mostrarToast('Imóvel excluído da nuvem com sucesso!');
+          } else {
+            DB.imoveis = DB.imoveis.filter(i => String(i.id) !== String(id));
+            salvarDados();
+            renderTabelaImoveis();
+          }
+        } catch (err) {
+          alert('Erro ao excluir imóvel: ' + err.message);
+        }
+      }
+    };
+
+    // Formulário de Imóvel (Salvar / Editar no Firebase)
+    document.getElementById('form-imovel').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btnSalvar = document.getElementById('btn-salvar-imovel');
+      btnSalvar.disabled = true;
+      btnSalvar.textContent = 'Salvando na nuvem...';
+
+      const id = document.getElementById('imovel-id').value;
+      const latVal = document.getElementById('campo-lat').value.trim();
+      const lngVal = document.getElementById('campo-lng').value.trim();
+
+      const dados = {
+        id: id ? String(id) : String(Date.now()),
+        titulo: document.getElementById('campo-titulo').value.trim(),
+        finalidade: document.getElementById('campo-finalidade').value,
+        tipo: document.getElementById('campo-tipo').value,
+        bairro: document.getElementById('campo-bairro').value,
+        cidade: 'Augustinópolis - TO',
+        preco: document.getElementById('campo-preco').value.trim(),
+        precoNumero: document.getElementById('campo-preco-numero').value ? Number(document.getElementById('campo-preco-numero').value) : null,
+        exibirPreco: document.getElementById('campo-exibir-preco').value === 'true',
+        quartos: document.getElementById('campo-quartos').value ? Number(document.getElementById('campo-quartos').value) : null,
+        banheiros: document.getElementById('campo-banheiros').value ? Number(document.getElementById('campo-banheiros').value) : null,
+        area: document.getElementById('campo-area').value.trim(),
+        imagem: document.getElementById('campo-imagem').value.trim() || 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80',
+        publicado: document.getElementById('campo-publicado').value === 'true',
+        latitude: latVal ? Number(latVal) : null,
+        longitude: lngVal ? Number(lngVal) : null,
+        precisaoLocalizacao: document.getElementById('campo-precisao').value
+      };
+
+      try {
+        const progressBox = document.getElementById('upload-progress-container');
+        const progressBar = document.getElementById('upload-progress-bar');
+        const progressText = document.getElementById('upload-progress-text');
+
+        if (arquivoFotoSelecionada) {
+          progressBox.style.display = 'block';
+        }
+
+        if (window.CDB_FIREBASE) {
+          await window.CDB_FIREBASE.salvarImovel(dados, arquivoFotoSelecionada, function(pct) {
+            progressBar.style.width = pct.toFixed(0) + '%';
+            progressText.textContent = 'Enviando foto para a nuvem... ' + pct.toFixed(0) + '%';
+          });
+          mostrarToast('✅ Imóvel publicado na nuvem em tempo real!');
+        } else {
+          salvarDados();
+        }
+
+        // Limpa estado do formulário e retorna à aba de imóveis
+        limparFormularioImovel();
+        arquivoFotoSelecionada = null;
+        document.getElementById('nome-foto-selecionada').textContent = 'Nenhum arquivo novo selecionado';
+        document.getElementById('foto-preview-wrapper').style.display = 'none';
+        progressBox.style.display = 'none';
+        progressBar.style.width = '0%';
+
+        document.querySelector('[data-tab="tab-imoveis"]').click();
+      } catch (err) {
+        alert('Erro ao salvar imóvel: ' + err.message);
+      } finally {
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = '💾 Salvar Imóvel';
+      }
+    });
+
+    // Renderização Atualizada da Tabela com Ações em Tempo Real (Pausar/Alugado, Editar, Excluir)
+    function renderTabelaImoveis() {
+      const corpo = document.getElementById('tabela-imoveis-corpo');
+      corpo.innerHTML = '';
+
+      if (!DB.imoveis || DB.imoveis.length === 0) {
+        corpo.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-secondary);">Nenhum imóvel cadastrado ainda. Clique em "Cadastrar Novo Imóvel".</td></tr>';
+        atualizarContadores();
+        return;
+      }
+
+      DB.imoveis.forEach(imovel => {
+        const temCoord = imovel.latitude && imovel.longitude;
+        const estaPublicado = imovel.publicado !== false;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><img src="${imovel.imagem || 'logo.jpg'}" style="width: 50px; height: 36px; object-fit: cover; border-radius: 6px;"></td>
+          <td><strong>${imovel.titulo}</strong></td>
+          <td><span class="badge ${imovel.finalidade === 'VENDA' ? 'badge-success' : 'badge-info'}">${imovel.finalidade}</span></td>
+          <td>${imovel.tipo}</td>
+          <td>${imovel.bairro}</td>
+          <td>${imovel.preco || 'Sob consulta'}</td>
+          <td>
+            ${temCoord 
+              ? `<span class="badge badge-success">📍 ${imovel.precisaoLocalizacao === 'exata' ? 'Exata' : 'Aproximada'}</span>`
+              : `<span class="badge badge-warning">⚠️ Sem Coordenadas</span>`}
+          </td>
+          <td>
+            <span class="badge ${estaPublicado ? 'badge-success' : 'badge-danger'}">
+              ${estaPublicado ? 'Disponível' : 'Alugado / Pausado'}
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn btn-outline btn-sm" onclick="editarImovel('${imovel.id}')" title="Editar dados">✏️ Editar</button>
+              ${estaPublicado 
+                ? `<button type="button" class="btn btn-outline btn-sm" onclick="togglePublicadoImovel('${imovel.id}', false)" title="Marcar como alugado/pausado (oculta do site)">⏸️ Alugado</button>`
+                : `<button type="button" class="btn btn-primary btn-sm" onclick="togglePublicadoImovel('${imovel.id}', true)" title="Reativar anúncio (volta a aparecer no site)">▶️ Reativar</button>`}
+              <button type="button" class="btn btn-danger btn-sm" onclick="excluirImovelFirebase('${imovel.id}')" title="Excluir permanentemente">🗑️</button>
+            </div>
+          </td>
+        `;
+        corpo.appendChild(tr);
+      });
+      atualizarContadores();
+    }
+
+    // Inicialização da Escuta em Tempo Real do Firestore no Admin
+    function iniciarSincronizacaoNuvemAdmin() {
+      if (window.CDB_FIREBASE) {
+        window.CDB_FIREBASE.ouvirImoveis(function(imoveisNuvem) {
+          DB.imoveis = imoveisNuvem;
+          renderTabelaImoveis();
+          console.log('[Admin] Imóveis atualizados em tempo real via Firestore:', imoveisNuvem.length);
+        });
+      }
+    }
+
+    // Formulário de Imóvel Antigo Desativado
+    const _dummySubmit = function() {
       e.preventDefault();
       const id = document.getElementById('imovel-id').value;
       const latVal = document.getElementById('campo-lat').value.trim();
@@ -941,6 +1160,7 @@ window.CHAVE_DO_BICO_DATA = ${json};
     // Inicialização
     carregarDados();
     renderTabelaImoveis();
+    iniciarSincronizacaoNuvemAdmin();
     renderTabelaBairros();
     popularSelectBairros();
     carregarConfiguracoes();

@@ -2776,6 +2776,12 @@
   <script src="assets/js/localizacao.js"></script>
   <script src="assets/js/efeitos-interativos.js"></script>
 
+  <!-- Firebase SDKs (Compat) & Sincronização em Tempo Real -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+  <script src="assets/js/firebase-sync.js"></script>
+
   <script>
     // ==========================================================================
     // BASE DE DADOS DINÂMICA DE IMÓVEIS (EXTENSÍVEL VIA window.cadastrarImovel)
@@ -3116,6 +3122,32 @@
     // INICIALIZAÇÃO DE EVENTOS & PARALLAX DO VÍDEO
     // ==========================================================================
     document.addEventListener('DOMContentLoaded', function() {
+      // Sincronização em Tempo Real com o Firebase Firestore
+      if (window.CDB_FIREBASE) {
+        // Popula os imóveis iniciais no Firestore caso o banco esteja vazio
+        window.CDB_FIREBASE.sincronizarImoveisIniciaisSeVazio(IMOVEIS_DATABASE);
+
+        // Ouve atualizações em tempo real (novos cadastros, alugados/removidos)
+        window.CDB_FIREBASE.ouvirImoveis(function(imoveisNuvem) {
+          if (Array.isArray(imoveisNuvem) && imoveisNuvem.length > 0) {
+            // Filtra somente os publicados (imóveis alugados/pausados são automaticamente ocultados)
+            const ativos = imoveisNuvem.filter(i => i.publicado !== false);
+            IMOVEIS_DATABASE.length = 0;
+            ativos.forEach(i => IMOVEIS_DATABASE.push(i));
+
+            currentSlide = 0;
+            renderizarCarrossel();
+
+            // Notifica o mapa interativo e os filtros de bairros
+            window.dispatchEvent(new CustomEvent('cdb:imoveis-atualizados'));
+            if (window.CDB && typeof window.CDB.aplicar === 'function') {
+              window.CDB.aplicar();
+            }
+            console.log('⚡ [Chave do Bico] Imóveis sincronizados em tempo real com a nuvem:', ativos.length);
+          }
+        });
+      }
+
       renderizarCarrossel();
       iniciarAutoPlay();
 
