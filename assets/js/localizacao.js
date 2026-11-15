@@ -36,7 +36,7 @@
 
   function imoveis() {
     return (typeof IMOVEIS_DATABASE !== 'undefined' ? IMOVEIS_DATABASE : [])
-      .filter(i => i.publicado !== false);
+      .filter(i => i.publicado !== false && !i.exemplo);
   }
 
   function bairroDoImovel(i) {

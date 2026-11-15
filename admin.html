@@ -1110,6 +1110,14 @@
       } else {
         DB = window.CHAVE_DO_BICO_DATA || { imoveis: [], bairros: [], config: {} };
       }
+
+      // Garante remoção de imóveis fictícios/exemplos antigos
+      if (DB && Array.isArray(DB.imoveis)) {
+        DB.imoveis = DB.imoveis.filter(i => !i.exemplo);
+      } else if (DB) {
+        DB.imoveis = [];
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
     }
 
     function salvarDados(silencioso = false) {

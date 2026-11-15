@@ -3072,105 +3072,19 @@
         const local = localStorage.getItem('CHAVE_DO_BICO_DATA_V1');
         if (local) {
           const parsed = JSON.parse(local);
-          if (parsed && Array.isArray(parsed.imoveis) && parsed.imoveis.length > 0) {
-            return parsed.imoveis;
+          if (parsed && Array.isArray(parsed.imoveis)) {
+            return parsed.imoveis.filter(i => !i.exemplo);
           }
         }
       } catch (e) {}
 
-      if (window.CHAVE_DO_BICO_DATA && Array.isArray(window.CHAVE_DO_BICO_DATA.imoveis) && window.CHAVE_DO_BICO_DATA.imoveis.length > 0) {
-        return window.CHAVE_DO_BICO_DATA.imoveis;
+      if (window.CHAVE_DO_BICO_DATA && Array.isArray(window.CHAVE_DO_BICO_DATA.imoveis)) {
+        return window.CHAVE_DO_BICO_DATA.imoveis.filter(i => !i.exemplo);
       }
-      return null;
+      return [];
     }
 
-    const _dadosCarregados = obterImoveisIniciais();
-    const IMOVEIS_DATABASE = _dadosCarregados || [
-      {
-        id: 1,
-        titulo: "Casa Ampla 3 Quartos com Quintal",
-        finalidade: "ALUGUEL",
-        tipo: "CASA",
-        bairro: "Centro",
-        cidade: "Augustinópolis - TO",
-        preco: "R$ 1.200/mês",
-        imagem: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80",
-        quartos: 3,
-        banheiros: 2,
-        area: "140 m²",
-        whatsapp: "5563999999999"
-      },
-      {
-        id: 2,
-        titulo: "Lote Residencial no Setor Boa Vista",
-        finalidade: "VENDA",
-        tipo: "LOTE",
-        bairro: "Boa Vista",
-        cidade: "Augustinópolis - TO",
-        preco: "R$ 68.000",
-        imagem: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80",
-        quartos: null,
-        banheiros: null,
-        area: "360 m² (12x30)",
-        whatsapp: "5563999999999"
-      },
-      {
-        id: 3,
-        titulo: "Kitnet Mobiliada para Estudante ou Profissional",
-        finalidade: "ALUGUEL",
-        tipo: "KITNET",
-        bairro: "Santa Cruz",
-        cidade: "Augustinópolis - TO",
-        preco: "R$ 650/mês",
-        imagem: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
-        quartos: 1,
-        banheiros: 1,
-        area: "35 m²",
-        whatsapp: "5563999999999"
-      },
-      {
-        id: 4,
-        titulo: "Ponto Comercial com Excelente Fluxo e Fachada Ampla",
-        finalidade: "ALUGUEL",
-        tipo: "COMERCIAL",
-        bairro: "Setor Rodoviário",
-        cidade: "Augustinópolis - TO",
-        preco: "R$ 1.800/mês",
-        imagem: "https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=800&q=80",
-        quartos: null,
-        banheiros: 1,
-        area: "85 m²",
-        whatsapp: "5563999999999"
-      },
-      {
-        id: 5,
-        titulo: "Lote Escriturado Pronto para Construção Imediata",
-        finalidade: "VENDA",
-        tipo: "LOTE",
-        bairro: "Santa Cruz",
-        cidade: "Augustinópolis - TO",
-        preco: "R$ 55.000",
-        imagem: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80",
-        quartos: null,
-        banheiros: null,
-        area: "300 m²",
-        whatsapp: "5563999999999"
-      },
-      {
-        id: 6,
-        titulo: "Casa Confortável 2 Quartos com Garagem Coberta",
-        finalidade: "ALUGUEL",
-        tipo: "CASA",
-        bairro: "Centro",
-        cidade: "Augustinópolis - TO",
-        preco: "R$ 950/mês",
-        imagem: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=80",
-        quartos: 2,
-        banheiros: 1,
-        area: "90 m²",
-        whatsapp: "5563999999999"
-      }
-    ];
+    const IMOVEIS_DATABASE = obterImoveisIniciais();
 
     // ==========================================================================
     // SISTEMA DO CARROSSEL ANIMADO DINÂMICO
@@ -3221,7 +3135,23 @@
 
       const listaExibir = imoveisFiltradosExibicao || IMOVEIS_DATABASE;
       if (listaExibir.length === 0) {
-        track.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏡</div><h4>Nenhum imóvel disponível para esses filtros</h4><p>Experimente selecionar outros bairros ou limpar os filtros para ver todas as oportunidades.</p><div class="empty-state-actions"><button type="button" class="btn btn-primary btn-sm" onclick="CDB.limparFiltros()">Limpar Filtros e Ver Todos</button><a href="https://wa.me/5563999630980" target="_blank" rel="noopener" class="btn btn-accent btn-sm">Falar com a Equipe no WhatsApp</a></div></div>`;
+        track.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1; width: 100%; text-align: center; padding: 48px 24px; background: #fff; border-radius: 16px; border: 1.5px dashed #D2DEC3; margin: 10px 0;">
+            <div class="empty-state-icon" style="font-size: 46px; margin-bottom: 12px;">🏡</div>
+            <h4 style="font-size: 20px; font-weight: 700; color: var(--brand-dark); margin-bottom: 8px;">Nenhum imóvel disponível no momento</h4>
+            <p style="font-size: 14.5px; color: var(--text-secondary); max-width: 480px; margin: 0 auto 20px; line-height: 1.5;">
+              Tem um imóvel para alugar ou vender em Augustinópolis e Região? Anuncie direto com o interessado sem taxas de contrato!
+            </p>
+            <div class="empty-state-actions" style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+              <a href="https://wa.me/5563999630980?text=Olá!%20Gostaria%20de%20anunciar%20meu%20imóvel%20na%20Chave%20do%20Bico" target="_blank" rel="noopener" class="btn btn-accent btn-sm">
+                📢 Anunciar Meu Imóvel
+              </a>
+              <a href="admin.html" class="btn btn-primary btn-sm">
+                ⚙️ Painel de Cadastro
+              </a>
+            </div>
+          </div>
+        `;
         return;
       }
       listaExibir.forEach((imovel, index) => {
@@ -3427,7 +3357,7 @@
 
     function obterImoveisParaHero() {
       const lista = (Array.isArray(IMOVEIS_DATABASE) && IMOVEIS_DATABASE.length > 0)
-        ? IMOVEIS_DATABASE
+        ? IMOVEIS_DATABASE.filter(im => !im.exemplo)
         : [];
       // Filtra apenas disponíveis (publicados e não alugados)
       const disponiveis = lista.filter(im => {
@@ -3435,23 +3365,80 @@
         const st = String(im.status || '').toLowerCase().trim();
         return st !== 'alugado';
       });
-      return disponiveis.length > 0 ? disponiveis : lista;
+      return disponiveis;
     }
 
     function renderizarHeroCard(index, animar = true) {
       const lista = obterImoveisParaHero();
-      if (!lista || lista.length === 0) return;
+      const cardInner = document.getElementById('hero-card-inner');
+      const counterText = document.getElementById('hero-card-counter-text');
+      const dotsContainer = document.getElementById('hero-card-dots');
+
+      if (!cardInner) return;
+
+      // Estado Vazio (quando não há imóveis reais cadastrados ainda)
+      if (!lista || lista.length === 0) {
+        if (counterText) counterText.textContent = "Aguardando Novos Imóveis";
+        if (dotsContainer) dotsContainer.innerHTML = "";
+        cardInner.innerHTML = `
+          <div class="card-media" style="background: linear-gradient(135deg, #133E1D 0%, #0B2511 100%); display: flex; align-items: center; justify-content: center; min-height: 240px; text-align: center; padding: 24px;">
+            <div style="color: #fff;">
+              <div style="font-size: 44px; margin-bottom: 8px;">🏡</div>
+              <h4 style="font-size: 19px; font-weight: 700; color: #42D900; margin-bottom: 6px;">Seja o Primeiro a Anunciar!</h4>
+              <p style="font-size: 13.5px; color: rgba(255,255,255,0.85); max-width: 290px; margin: 0 auto;">Nenhum imóvel cadastrado no momento. Cadastre pelo painel ou anuncie no WhatsApp.</p>
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="card-location">
+              <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+              <span>Augustinópolis e Região do Bico</span>
+            </div>
+            <h3 class="card-title">Vitrine Oficial de Imóveis</h3>
+            <p style="font-size: 13.5px; color: #556B5B; line-height: 1.5; margin-bottom: 16px;">
+              Conecte-se com interessados e proprietários sem burocracia e com negociação direta no WhatsApp.
+            </p>
+            <div class="card-footer">
+              <a href="https://wa.me/5563999630980?text=Olá!%20Gostaria%20de%20anunciar%20meu%20imóvel%20na%20Chave%20do%20Bico" target="_blank" rel="noopener" class="btn-whatsapp-card" style="width: 100%; justify-content: center;">
+                <svg viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.92-9.91-9.92z"/></svg>
+                <span>Anunciar no WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // Restaura a estrutura de card caso tenha sido exibido o estado vazio anteriormente
+      if (!document.getElementById('hero-card-img')) {
+        cardInner.innerHTML = `
+          <div class="card-media">
+            <div class="card-floating-badges" id="hero-card-badges"></div>
+            <img id="hero-card-img" src="" alt="" loading="eager" width="450" height="281">
+            <span class="badge-direto">⚡ Direto com o proprietário</span>
+          </div>
+          <div class="card-content">
+            <div class="card-location" id="hero-card-location"></div>
+            <h3 class="card-title" id="hero-card-title"></h3>
+            <div class="card-features" id="hero-card-features"></div>
+            <div class="card-footer">
+              <div class="card-price-box">
+                <span class="card-price-label" id="hero-card-price-label"></span>
+                <span class="card-price-val" id="hero-card-price-val"></span>
+              </div>
+              <a href="" id="hero-card-whatsapp" target="_blank" rel="noopener" class="btn-whatsapp-card">
+                <svg viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.92-9.91-9.92z"/></svg>
+                <span>Falar no WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        `;
+      }
 
       if (index < 0) index = lista.length - 1;
       if (index >= lista.length) index = 0;
       heroCurrentIndex = index;
 
       const imovel = lista[index];
-      const cardInner = document.getElementById('hero-card-inner');
-      const counterText = document.getElementById('hero-card-counter-text');
-      const dotsContainer = document.getElementById('hero-card-dots');
-
-      if (!cardInner) return;
 
       const atualizarDOM = () => {
         // 1. Contador e Indicadores
@@ -3668,9 +3655,10 @@
       // 2. Sincronização com o Repositório GitHub (GitHub API / Raw Cache-Buster)
       if (window.CDB_GITHUB && typeof window.CDB_GITHUB.carregarDadosMaisRecentes === 'function') {
         window.CDB_GITHUB.carregarDadosMaisRecentes().then(dadosMaisRecentes => {
-          if (dadosMaisRecentes && Array.isArray(dadosMaisRecentes.imoveis) && dadosMaisRecentes.imoveis.length > 0) {
+          if (dadosMaisRecentes && Array.isArray(dadosMaisRecentes.imoveis)) {
+            const listaReal = dadosMaisRecentes.imoveis.filter(i => !i.exemplo);
             IMOVEIS_DATABASE.length = 0;
-            dadosMaisRecentes.imoveis.forEach(i => IMOVEIS_DATABASE.push(i));
+            listaReal.forEach(i => IMOVEIS_DATABASE.push(i));
             currentSlide = 0;
             renderizarCarrossel();
             renderizarHeroCard(0, false);
